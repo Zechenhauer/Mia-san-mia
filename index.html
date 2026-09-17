@@ -462,7 +462,6 @@
             "RB Leipzig",
             "Eintracht Frankfurt",
             "VfB Stuttgart",
-            "VfL Wolfsburg",
             "Borussia Mönchengladbach",
             "Werder Bremen",
             "Sport-Club Freiburg",
@@ -1077,37 +1076,51 @@
             stats[t] = { name: t, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 };
         });
 
+        // Hilfsfunktion, um Vereinsnamen zwischen Spielplan ("SV Werder Bremen") und Team-Liste abzugleichen
+        function cleanTeamName(name) {
+            if (!name) return "";
+            let n = name.trim();
+            if (n === "SV Werder Bremen" && stats["Werder Bremen"]) return "Werder Bremen";
+            if (n === "Werder Bremen" && stats["SV Werder Bremen"]) return "SV Werder Bremen";
+            return n;
+        }
+
         Object.values(leagueData.matches).forEach(matchList => {
             if (!Array.isArray(matchList)) return;
             matchList.forEach(m => {
                 let hScore = m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : (m.homescore !== undefined && m.homescore !== null ? m.homescore : null);
                 let aScore = m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : (m.awayscore !== undefined && m.awayscore !== null ? m.awayscore : null);
 
-                if (hScore === null || aScore === null || !stats[m.home] || !stats[m.away]) return;
+                if (hScore === null || aScore === null) return;
+
+                let homeTeam = cleanTeamName(m.home);
+                let awayTeam = cleanTeamName(m.away);
+
+                if (!stats[homeTeam] || !stats[awayTeam]) return;
                 
                 let homeScore = parseInt(hScore);
                 let awayScore = parseInt(aScore);
 
-                stats[m.home].played++;
-                stats[m.away].played++;
-                stats[m.home].goalsFor += homeScore;
-                stats[m.home].goalsAgainst += awayScore;
-                stats[m.away].goalsFor += awayScore;
-                stats[m.away].goalsAgainst += homeScore;
+                stats[homeTeam].played++;
+                stats[awayTeam].played++;
+                stats[homeTeam].goalsFor += homeScore;
+                stats[homeTeam].goalsAgainst += awayScore;
+                stats[awayTeam].goalsFor += awayScore;
+                stats[awayTeam].goalsAgainst += homeScore;
 
                 if (homeScore > awayScore) {
-                    stats[m.home].won++;
-                    stats[m.home].points += 3;
-                    stats[m.away].lost++;
+                    stats[homeTeam].won++;
+                    stats[homeTeam].points += 3;
+                    stats[awayTeam].lost++;
                 } else if (homeScore < awayScore) {
-                    stats[m.away].won++;
-                    stats[m.away].points += 3;
-                    stats[m.home].lost++;
+                    stats[awayTeam].won++;
+                    stats[awayTeam].points += 3;
+                    stats[homeTeam].lost++;
                 } else {
-                    stats[m.home].draw++;
-                    stats[m.home].points += 1;
-                    stats[m.away].draw++;
-                    stats[m.away].points += 1;
+                    stats[homeTeam].draw++;
+                    stats[homeTeam].points += 1;
+                    stats[awayTeam].draw++;
+                    stats[awayTeam].points += 1;
                 }
             });
         });
