@@ -161,7 +161,6 @@
             border-bottom: 1px solid rgba(220, 5, 45, 0.3);
         }
 
-        /* LIVE-Badge Styling mit Pulsier-Effekt */
         .live-badge {
             display: inline-flex;
             align-items: center;
@@ -233,7 +232,6 @@
             border-bottom: 1px solid rgba(220, 5, 45, 0.4);
         }
 
-        /* Statistik-Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -876,7 +874,7 @@
 
     async function loadFromCloud() {
         try {
-            let { data } = await supabaseClient
+            let { data, error } = await supabaseClient
                 .from('bundesliga_2627')
                 .select('payload')
                 .eq('id', 'season_data')
@@ -914,9 +912,14 @@
 
     async function saveToCloud() {
         try {
-            await supabaseClient
+            let { error } = await supabaseClient
                 .from('bundesliga_2627')
                 .upsert({ id: 'season_data', payload: leagueData });
+            
+            if (error) {
+                console.error('Supabase Speicherfehler:', error.message);
+                alert('Fehler beim Speichern in Supabase: ' + error.message);
+            }
         } catch (e) {
             console.error('Speicherfehler:', e);
         }
@@ -949,7 +952,7 @@
                 let isAway = m.away === "FC Bayern München";
                 if (!isHome && !isAway) return;
 
-                if (m.homeScore !== undefined && m.awayScore !== undefined) {
+                if (m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null) {
                     played++;
                     let myGoals = isHome ? m.homeScore : m.awayScore;
                     let oppGoals = isHome ? m.awayScore : m.homeScore;
@@ -1001,7 +1004,6 @@
         }
     }
 
-    // Hilfsfunktion zur Live-Erkennung anhand von Datum & Uhrzeit
     function isMatchLive(matchDate, matchTime) {
         if (!matchDate || !matchTime) return false;
         try {
@@ -1078,20 +1080,26 @@
         Object.values(leagueData.matches).forEach(matchList => {
             if (!Array.isArray(matchList)) return;
             matchList.forEach(m => {
-                if (m.homeScore === undefined || m.homeScore === null || m.awayScore === undefined || m.awayScore === null || !stats[m.home] || !stats[m.away]) return;
+                let hScore = m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : (m.homescore !== undefined && m.homescore !== null ? m.homescore : null);
+                let aScore = m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : (m.awayscore !== undefined && m.awayscore !== null ? m.awayscore : null);
+
+                if (hScore === null || aScore === null || !stats[m.home] || !stats[m.away]) return;
                 
+                let homeScore = parseInt(hScore);
+                let awayScore = parseInt(aScore);
+
                 stats[m.home].played++;
                 stats[m.away].played++;
-                stats[m.home].goalsFor += m.homeScore;
-                stats[m.home].goalsAgainst += m.awayScore;
-                stats[m.away].goalsFor += m.awayScore;
-                stats[m.away].goalsAgainst += m.homeScore;
+                stats[m.home].goalsFor += homeScore;
+                stats[m.home].goalsAgainst += awayScore;
+                stats[m.away].goalsFor += awayScore;
+                stats[m.away].goalsAgainst += homeScore;
 
-                if (m.homeScore > m.awayScore) {
+                if (homeScore > awayScore) {
                     stats[m.home].won++;
                     stats[m.home].points += 3;
                     stats[m.away].lost++;
-                } else if (m.homeScore < m.awayScore) {
+                } else if (homeScore < awayScore) {
                     stats[m.away].won++;
                     stats[m.away].points += 3;
                     stats[m.home].lost++;
@@ -1171,11 +1179,11 @@
                     </div>
                     <div class="form-group">
                         <label>Tore Heim</label>
-                        <input type="number" id="hs_${idx}" class="form-control" value="${m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : ''}" min="0">
+                        <input type="number" id="hs_${idx}" class="form-control" value="${m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : (m.homescore !== undefined && m.homescore !== null ? m.homescore : '')}" min="0">
                     </div>
                     <div class="form-group">
                         <label>Tore Gast</label>
-                        <input type="number" id="as_${idx}" class="form-control" value="${m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : ''}" min="0">
+                        <input type="number" id="as_${idx}" class="form-control" value="${m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : (m.awayscore !== undefined && m.awayscore !== null ? m.awayscore : '')}" min="0">
                     </div>
                     ${scorersInputHtml}
                 </div>
