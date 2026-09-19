@@ -453,6 +453,7 @@
     const ADMIN_PIN = "1919";
     let isAdmin = false;
 
+    // Fester, unveränderlicher Standard-Spielplan für alle 34 Spieltage
     let leagueData = {
         currentMatchday: 1,
         teams: [
@@ -871,6 +872,7 @@
         }
     }
 
+    // Lädt NUR die aktuellen Ergebnisse und den Spieltag aus Supabase
     async function loadFromCloud() {
         try {
             let { data, error } = await supabaseClient
@@ -880,10 +882,27 @@
                 .single();
 
             if (data && data.payload) {
-                let cloudData = data.payload;
-                if (cloudData && cloudData.matches) {
-                    leagueData.currentMatchday = cloudData.currentMatchday || leagueData.currentMatchday;
-                    mergeMatches(cloudData);
+                let cloudPayload = data.payload;
+                
+                if (cloudPayload.currentMatchday) {
+                    leagueData.currentMatchday = cloudPayload.currentMatchday;
+                }
+
+                // Unterstützt sowohl das neue Format (match_results) als auch das alte (matches)
+                let resultsSource = cloudPayload.match_results || cloudPayload.matches;
+
+                if (resultsSource) {
+                    for (let mDay in resultsSource) {
+                        if (leagueData.matches[mDay] && Array.isArray(resultsSource[mDay])) {
+                            resultsSource[mDay].forEach((savedM, sIdx) => {
+                                if (leagueData.matches[mDay][sIdx]) {
+                                    if (savedM.homeScore !== undefined) leagueData.matches[mDay][sIdx].homeScore = savedM.homeScore;
+                                    if (savedM.awayScore !== undefined) leagueData.matches[mDay][sIdx].awayScore = savedM.awayScore;
+                                    if (savedM.bayernScorers !== undefined) leagueData.matches[mDay][sIdx].bayernScorers = savedM.bayernScorers;
+                                }
+                            });
+                        }
+                    }
                 }
             } else {
                 saveToCloud();
@@ -894,26 +913,28 @@
         renderAll();
     }
 
-    function mergeMatches(sourceData) {
-        if (!sourceData || !sourceData.matches) return;
-        for (let mDay in sourceData.matches) {
-            if (leagueData.matches[mDay]) {
-                sourceData.matches[mDay].forEach((savedM, sIdx) => {
-                    if (leagueData.matches[mDay][sIdx]) {
-                        if (savedM.homeScore !== undefined) leagueData.matches[mDay][sIdx].homeScore = savedM.homeScore;
-                        if (savedM.awayScore !== undefined) leagueData.matches[mDay][sIdx].awayScore = savedM.awayScore;
-                        if (savedM.bayernScorers !== undefined) leagueData.matches[mDay][sIdx].bayernScorers = savedM.bayernScorers;
-                    }
-                });
-            }
-        }
-    }
-
+    // Speichert NUR die veränderten Ergebnisse und den aktuellen Spieltag (ohne den Spielplan anzutasten)
     async function saveToCloud() {
         try {
+            let resultsOnly = {};
+            for (let mDay in leagueData.matches) {
+                resultsOnly[mDay] = leagueData.matches[mDay].map(m => {
+                    let res = {};
+                    if (m.homeScore !== undefined && m.homeScore !== null) res.homeScore = m.homeScore;
+                    if (m.awayScore !== undefined && m.awayScore !== null) res.awayScore = m.awayScore;
+                    if (m.bayernScorers !== undefined) res.bayernScorers = m.bayernScorers;
+                    return res;
+                });
+            }
+
+            let payloadToSave = {
+                currentMatchday: leagueData.currentMatchday,
+                match_results: resultsOnly
+            };
+
             let { error } = await supabaseClient
                 .from('bundesliga_2627')
-                .upsert({ id: 'season_data', payload: leagueData });
+                .upsert({ id: 'season_data', payload: payloadToSave });
             
             if (error) {
                 console.error('Supabase Speicherfehler:', error.message);
@@ -1076,7 +1097,6 @@
             stats[t] = { name: t, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 };
         });
 
-        // Hilfsfunktion, um Vereinsnamen zwischen Spielplan ("SV Werder Bremen") und Team-Liste abzugleichen
         function cleanTeamName(name) {
             if (!name) return "";
             let n = name.trim();
@@ -1088,8 +1108,8 @@
         Object.values(leagueData.matches).forEach(matchList => {
             if (!Array.isArray(matchList)) return;
             matchList.forEach(m => {
-                let hScore = m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : (m.homescore !== undefined && m.homescore !== null ? m.homescore : null);
-                let aScore = m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : (m.awayscore !== undefined && m.awayscore !== null ? m.awayscore : null);
+                let hScore = m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : null;
+                let aScore = m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : null;
 
                 if (hScore === null || aScore === null) return;
 
@@ -1192,11 +1212,11 @@
                     </div>
                     <div class="form-group">
                         <label>Tore Heim</label>
-                        <input type="number" id="hs_${idx}" class="form-control" value="${m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : (m.homescore !== undefined && m.homescore !== null ? m.homescore : '')}" min="0">
+                        <input type="number" id="hs_${idx}" class="form-control" value="${m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : ''}" min="0">
                     </div>
                     <div class="form-group">
                         <label>Tore Gast</label>
-                        <input type="number" id="as_${idx}" class="form-control" value="${m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : (m.awayscore !== undefined && m.awayscore !== null ? m.awayscore : '')}" min="0">
+                        <input type="number" id="as_${idx}" class="form-control" value="${m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : ''}" min="0">
                     </div>
                     ${scorersInputHtml}
                 </div>
