@@ -854,6 +854,26 @@
         }
     };
 
+    // Automatisches Finden des aktuellen Spieltags beim Start
+    function initMatchday() {
+        let savedDay = localStorage.getItem('bundesliga_current_matchday');
+        if (savedDay) {
+            leagueData.currentMatchday = parseInt(savedDay);
+            return;
+        }
+
+        let todayStr = new Date().toISOString().split('T')[0];
+        for (let mDay in leagueData.matches) {
+            let matches = leagueData.matches[mDay];
+            let hasToday = matches.some(m => m.date === todayStr);
+            if (hasToday) {
+                leagueData.currentMatchday = parseInt(mDay);
+                return;
+            }
+        }
+    }
+    initMatchday();
+
     function toggleAdminMode() {
         const adminCard = document.getElementById('adminCard');
         if (isAdmin) {
@@ -872,7 +892,7 @@
         }
     }
 
-    // Lädt alle Spiel-Ergebnisse aus der Supabase-Tabelle "bundesliga_spiele"
+    // Lädt alle Spiel-Ergebnisse aus Supabase und matcht sie robust über die Teamnamen (unabhängig vom Datenbank-Spieltag)
     async function loadFromCloud() {
         try {
             let { data, error } = await supabaseClient
@@ -885,20 +905,25 @@
                         delete m.homeScore;
                         delete m.awayScore;
                         delete m.bayernScorers;
+                        delete m.scorers;
                     });
                 }
 
                 data.forEach(row => {
-                    let mDay = row.matchday;
-                    if (leagueData.matches[mDay]) {
+                    let dbHome = row.home_team ? row.home_team.toLowerCase().trim() : "";
+                    let dbAway = row.away_team ? row.away_team.toLowerCase().trim() : "";
+
+                    for (let mDay in leagueData.matches) {
                         let matchObj = leagueData.matches[mDay].find(m => 
-                            m.home.toLowerCase().trim() === row.home_team.toLowerCase().trim() && 
-                            m.away.toLowerCase().trim() === row.away_team.toLowerCase().trim()
+                            m.home.toLowerCase().trim() === dbHome && 
+                            m.away.toLowerCase().trim() === dbAway
                         );
                         if (matchObj) {
                             matchObj.homeScore = row.home_score;
                             matchObj.awayScore = row.away_score;
                             matchObj.bayernScorers = row.bayern_scorers;
+                            matchObj.scorers = row.bayern_scorers;
+                            break;
                         }
                     }
                 });
@@ -926,7 +951,7 @@
                             away_team: m.away,
                             home_score: parseInt(m.homeScore),
                             away_score: parseInt(m.awayScore),
-                            bayern_scorers: m.bayernScorers || ""
+                            bayern_scorers: m.bayernScorers || m.scorers || ""
                         });
                     }
                 });
@@ -949,6 +974,7 @@
 
     function changeMatchday(amount) {
         leagueData.currentMatchday = Math.max(1, Math.min(34, leagueData.currentMatchday + amount));
+        localStorage.setItem('bundesliga_current_matchday', leagueData.currentMatchday);
         renderAll();
     }
 
@@ -985,8 +1011,9 @@
                     else if (myGoals === oppGoals) { draw++; points += 1; }
                     else { lost++; }
 
-                    if (m.bayernScorers && m.bayernScorers.trim() !== "") {
-                        let parts = m.bayernScorers.split(',');
+                    let scText = m.bayernScorers || m.scorers;
+                    if (scText && scText.trim() !== "") {
+                        let parts = scText.split(',');
                         parts.forEach(p => {
                             p = p.trim();
                             let matchNum = p.match(/\((\d+)\)/);
@@ -1070,8 +1097,9 @@
                 }
             }
 
-            if (isBayernMatch && hasResult && m.bayernScorers) {
-                resultDisplay += `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">⚽ ${m.bayernScorers}</div>`;
+            let scorersText = m.bayernScorers || m.scorers || "";
+            if (hasResult && scorersText.trim() !== "") {
+                resultDisplay += `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">⚽ ${scorersText}</div>`;
             }
 
             let deleteBtn = isAdmin ? `<button class="btn-danger" onclick="deleteMatchResult(${idx})" title="Ergebnis löschen">✕</button>` : '';
@@ -1184,19 +1212,16 @@
         let existingMatches = leagueData.matches[leagueData.currentMatchday] || [];
 
         existingMatches.forEach((m, idx) => {
-            let isBayern = (m.home === "FC Bayern München" || m.away === "FC Bayern München");
             let card = document.createElement('div');
             card.className = 'match-input-card';
             
-            let scorersInputHtml = '';
-            if (isBayern) {
-                scorersInputHtml = `
-                    <div class="form-group" style="grid-column: span 2; margin-top: 6px;">
-                        <label>Bayern Torschützen (z.B. Kane (2), Musiala)</label>
-                        <input type="text" id="bs_${idx}" class="form-control" value="${m.bayernScorers || ''}" placeholder="Torschützen eintragen...">
-                    </div>
-                `;
-            }
+            let currentScorers = m.bayernScorers || m.scorers || '';
+            let scorersInputHtml = `
+                <div class="form-group" style="grid-column: span 2; margin-top: 6px;">
+                    <label>Torschützen (z.B. Schick, Wirtz)</label>
+                    <input type="text" id="bs_${idx}" class="form-control" value="${currentScorers}" placeholder="Torschützen eintragen...">
+                </div>
+            `;
 
             card.innerHTML = `
                 <div style="font-size: 0.8rem; color: var(--bayern-bright-red); font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between;">
@@ -1239,37 +1264,36 @@
                 existingMatches[idx].awayScore = parseInt(asVal);
                 if (bsInput) {
                     existingMatches[idx].bayernScorers = bsInput.value;
+                    existingMatches[idx].scorers = bsInput.value;
                 }
             } else {
                 delete existingMatches[idx].homeScore;
                 delete existingMatches[idx].awayScore;
                 delete existingMatches[idx].bayernScorers;
+                delete existingMatches[idx].scorers;
             }
         }
-        renderAll();
         await saveToCloud();
-        await loadFromCloud();
+        renderAll();
+        alert("Ergebnisse erfolgreich gespeichert!");
     }
 
-    function deleteMatchResult(idx) {
+    async function deleteMatchResult(idx) {
         let existingMatches = leagueData.matches[leagueData.currentMatchday];
         if (existingMatches && existingMatches[idx]) {
             delete existingMatches[idx].homeScore;
             delete existingMatches[idx].awayScore;
             delete existingMatches[idx].bayernScorers;
-            saveAndSync();
+            delete existingMatches[idx].scorers;
+            await saveToCloud();
+            renderAll();
         }
-    }
-
-    function saveAndSync() {
-        renderAll();
-        saveToCloud();
     }
 
     // App beim Start initialisieren und Daten laden
     loadFromCloud();
 
-    // Auto-Refresh mit Admin-Sperre (während du tippst oder im Admin-Modus bist, wird nichts im Hintergrund neu geladen)
+    // Auto-Refresh (lädt im Hintergrund alle 30 Sek. neu, wenn heute ein Spiel stattfindet und du nicht im Admin-Modus bist)
     setInterval(() => {
         if (isAdmin) return;
 
