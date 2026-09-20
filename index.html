@@ -356,7 +356,7 @@
     <div class="subtitle" id="leagueSubtitle">1. Bundesliga — Saison 2026/27</div>
     <div class="meta-info">
         <span>⚡ Web-App & Management: Jürgen Schützendorf</span>
-        <span class="supabase-badge">● Mit Supabase verbunden</span>
+        <span class="supabase-badge">● Live-Sync & Smart-Refresh aktiv</span>
     </div>
 
     <!-- BAYERN AUSWERTUNG & TORSCHÜTZEN -->
@@ -872,40 +872,36 @@
         }
     }
 
-    // Lädt NUR die aktuellen Ergebnisse und den Spieltag aus Supabase
+    // Lädt alle Spiel-Ergebnisse aus der Supabase-Tabelle "bundesliga_spiele"
     async function loadFromCloud() {
         try {
             let { data, error } = await supabaseClient
-                .from('bundesliga_2627')
-                .select('payload')
-                .eq('id', 'season_data')
-                .single();
+                .from('bundesliga_spiele')
+                .select('*');
 
-            if (data && data.payload) {
-                let cloudPayload = data.payload;
-                
-                if (cloudPayload.currentMatchday) {
-                    leagueData.currentMatchday = cloudPayload.currentMatchday;
+            if (data && Array.isArray(data)) {
+                for (let mDay in leagueData.matches) {
+                    leagueData.matches[mDay].forEach(m => {
+                        delete m.homeScore;
+                        delete m.awayScore;
+                        delete m.bayernScorers;
+                    });
                 }
 
-                // Unterstützt sowohl das neue Format (match_results) als auch das alte (matches)
-                let resultsSource = cloudPayload.match_results || cloudPayload.matches;
-
-                if (resultsSource) {
-                    for (let mDay in resultsSource) {
-                        if (leagueData.matches[mDay] && Array.isArray(resultsSource[mDay])) {
-                            resultsSource[mDay].forEach((savedM, sIdx) => {
-                                if (leagueData.matches[mDay][sIdx]) {
-                                    if (savedM.homeScore !== undefined) leagueData.matches[mDay][sIdx].homeScore = savedM.homeScore;
-                                    if (savedM.awayScore !== undefined) leagueData.matches[mDay][sIdx].awayScore = savedM.awayScore;
-                                    if (savedM.bayernScorers !== undefined) leagueData.matches[mDay][sIdx].bayernScorers = savedM.bayernScorers;
-                                }
-                            });
+                data.forEach(row => {
+                    let mDay = row.matchday;
+                    if (leagueData.matches[mDay]) {
+                        let matchObj = leagueData.matches[mDay].find(m => 
+                            m.home.toLowerCase().trim() === row.home_team.toLowerCase().trim() && 
+                            m.away.toLowerCase().trim() === row.away_team.toLowerCase().trim()
+                        );
+                        if (matchObj) {
+                            matchObj.homeScore = row.home_score;
+                            matchObj.awayScore = row.away_score;
+                            matchObj.bayernScorers = row.bayern_scorers;
                         }
                     }
-                }
-            } else {
-                saveToCloud();
+                });
             }
         } catch (e) {
             console.log('Supabase Ladehinweis:', e);
@@ -913,32 +909,38 @@
         renderAll();
     }
 
-    // Speichert NUR die veränderten Ergebnisse und den aktuellen Spieltag (ohne den Spielplan anzutasten)
+    // Speichert geänderte Ergebnisse in die Tabelle
     async function saveToCloud() {
         try {
-            let resultsOnly = {};
+            let rowsToUpsert = [];
+
             for (let mDay in leagueData.matches) {
-                resultsOnly[mDay] = leagueData.matches[mDay].map(m => {
-                    let res = {};
-                    if (m.homeScore !== undefined && m.homeScore !== null) res.homeScore = m.homeScore;
-                    if (m.awayScore !== undefined && m.awayScore !== null) res.awayScore = m.awayScore;
-                    if (m.bayernScorers !== undefined) res.bayernScorers = m.bayernScorers;
-                    return res;
+                leagueData.matches[mDay].forEach(m => {
+                    if (m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null) {
+                        let matchIdStr = "s" + mDay + "_" + m.home.trim().toLowerCase().replace(/[^a-z0-9]/g, "_") + "_vs_" + m.away.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
+                        
+                        rowsToUpsert.push({
+                            match_id: matchIdStr,
+                            matchday: parseInt(mDay),
+                            home_team: m.home,
+                            away_team: m.away,
+                            home_score: parseInt(m.homeScore),
+                            away_score: parseInt(m.awayScore),
+                            bayern_scorers: m.bayernScorers || ""
+                        });
+                    }
                 });
             }
 
-            let payloadToSave = {
-                currentMatchday: leagueData.currentMatchday,
-                match_results: resultsOnly
-            };
-
-            let { error } = await supabaseClient
-                .from('bundesliga_2627')
-                .upsert({ id: 'season_data', payload: payloadToSave });
-            
-            if (error) {
-                console.error('Supabase Speicherfehler:', error.message);
-                alert('Fehler beim Speichern in Supabase: ' + error.message);
+            if (rowsToUpsert.length > 0) {
+                let { error } = await supabaseClient
+                    .from('bundesliga_spiele')
+                    .upsert(rowsToUpsert, { onConflict: 'match_id' });
+                
+                if (error) {
+                    console.error('Supabase Speicherfehler:', error.message);
+                    alert('Fehler beim Speichern in Supabase: ' + error.message);
+                }
             }
         } catch (e) {
             console.error('Speicherfehler:', e);
@@ -947,7 +949,7 @@
 
     function changeMatchday(amount) {
         leagueData.currentMatchday = Math.max(1, Math.min(34, leagueData.currentMatchday + amount));
-        saveAndSync();
+        renderAll();
     }
 
     function renderAll() {
@@ -1225,7 +1227,7 @@
         });
     }
 
-    function saveAllMatches() {
+    async function saveAllMatches() {
         let existingMatches = leagueData.matches[leagueData.currentMatchday] || [];
         for (let idx = 0; idx < existingMatches.length; idx++) {
             let hsVal = document.getElementById(`hs_${idx}`).value;
@@ -1244,7 +1246,9 @@
                 delete existingMatches[idx].bayernScorers;
             }
         }
-        saveAndSync();
+        renderAll();
+        await saveToCloud();
+        await loadFromCloud();
     }
 
     function deleteMatchResult(idx) {
@@ -1262,7 +1266,21 @@
         saveToCloud();
     }
 
+    // App beim Start initialisieren und Daten laden
     loadFromCloud();
+
+    // Auto-Refresh mit Admin-Sperre (während du tippst oder im Admin-Modus bist, wird nichts im Hintergrund neu geladen)
+    setInterval(() => {
+        if (isAdmin) return;
+
+        let todayStr = new Date().toISOString().split('T')[0];
+        let matchesToday = leagueData.matches[leagueData.currentMatchday] || [];
+        let hasMatchToday = matchesToday.some(m => m.date === todayStr);
+
+        if (hasMatchToday) {
+            loadFromCloud();
+        }
+    }, 30000);
 </script>
 
 </body>
