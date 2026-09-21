@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FC Bayern München — Bundesliga Spielplan, Tabelle & Statistik 2026/27</title>
+    <title>FC Bayern München — Bundesliga Spielplan, Tabelle & Tippspiel 2026/27</title>
     <!-- Supabase Client Bibliothek laden -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -103,6 +103,20 @@
             font-weight: 600;
         }
 
+        /* Tippspiel Header Leiste */
+        .tippspiel-bar {
+            background: #1b1622;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
         .section-box {
             background: #0b0f19;
             border: 1px solid var(--border-color);
@@ -161,33 +175,6 @@
             border-bottom: 1px solid rgba(220, 5, 45, 0.3);
         }
 
-        .live-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            background: rgba(248, 81, 73, 0.15);
-            color: #f85149;
-            border: 1px solid rgba(248, 81, 73, 0.4);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .live-dot {
-            width: 6px;
-            height: 6px;
-            background-color: #f85149;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 1; }
-            50% { transform: scale(1.3); opacity: 0.4; }
-            100% { transform: scale(0.95); opacity: 1; }
-        }
-
         .table-container {
             width: 100%;
             overflow-x: auto;
@@ -223,7 +210,6 @@
             background: var(--accent-yellow);
             color: #e3b341;
         }
-
         tr.bayern-team-row td {
             font-weight: bold;
             color: var(--bayern-bright-red);
@@ -255,6 +241,45 @@
             font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
+        }
+
+        /* Tipp-Badges unter Partien */
+        .tips-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .tip-badge {
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 2px 5px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+        .modal-card {
+            background: #131b2e;
+            border: 1px solid var(--bayern-red);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .admin-toggle-wrapper {
@@ -353,10 +378,30 @@
         <h2>FC Bayern <span>München</span></h2>
         <img src="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png" alt="FC Bayern Logo" class="header-logo">
     </div>
-    <div class="subtitle" id="leagueSubtitle">1. Bundesliga — Saison 2026/27</div>
+    <div class="subtitle" id="leagueSubtitle">1. Bundesliga — Saison 2026/27 & Tippspiel</div>
     <div class="meta-info">
         <span>⚡ Web-App & Management: Jürgen Schützendorf</span>
-        <span class="supabase-badge">● Live-Sync & Smart-Refresh aktiv</span>
+        <span class="supabase-badge">● Cloud-DB aktiv</span>
+    </div>
+
+    <!-- TIPPSPIEL LEISTE -->
+    <div class="tippspiel-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 1.2rem;">🎯</span>
+            <div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold;">Kollegen-Tippspiel</div>
+                <div style="font-size: 0.85rem; font-weight: bold;" id="activeTipperDisplay">Eingeloggt als: Langen</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <select id="tipperSelect" class="form-control" style="width: 130px; font-weight: bold;" onchange="changeTipper(this.value)">
+                <option value="Langen">Langen (Gold)</option>
+                <option value="Kokser">Kokser (Grün)</option>
+            </select>
+            <button class="matchday-btn" onclick="openPasswordModal()" style="font-size: 0.75rem;">🔑 Passwort ändern</button>
+            <button class="matchday-btn" onclick="loadFromCloud(true)" style="background: #21262d; border-color: var(--border-color);" title="Daten sofort neu laden">🔄 Aktualisieren</button>
+            <button class="matchday-btn" onclick="openLeaderboardModal()" style="background: var(--bayern-red); border-color: var(--bayern-red);">🏆 Gesamtwertung</button>
+        </div>
     </div>
 
     <!-- BAYERN AUSWERTUNG & TORSCHÜTZEN -->
@@ -381,7 +426,7 @@
 
     <!-- SPIELTAGS-TABELLE -->
     <div class="section-box">
-        <div class="section-header" id="matchdayTableHeader">Spieltag 1 — Spiele & Ergebnisse</div>
+        <div class="section-header" id="matchdayTableHeader">Spieltag 1 — Spiele, Ergebnisse & Tipps</div>
         <div class="matchday-controls">
             <button class="matchday-btn" onclick="changeMatchday(-1)">◀ Vorheriger Spieltag</button>
             <strong id="matchdayDisplay" style="color: var(--bayern-bright-red); font-size: 1.1rem;">Spieltag 1</strong>
@@ -391,10 +436,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 130px; color: #ffffff;">Termin</th>
+                        <th style="width: 120px; color: #ffffff;">Termin</th>
                         <th style="text-align: right;">Heimmannschaft</th>
-                        <th style="text-align: center; width: 140px;">Ergebnis / Status</th>
+                        <th style="text-align: center; width: 160px;">Ergebnis / Status</th>
                         <th>Gastmannschaft</th>
+                        <th style="width: 110px; text-align: center;">Tipp</th>
                         <th style="width: 40px; text-align: center;"></th>
                     </tr>
                 </thead>
@@ -445,6 +491,91 @@
     </div>
 </div>
 
+<!-- MODAL: PASSWORT ABFRAGE (VOR TIPPEN) -->
+<div class="modal-overlay" id="authModal">
+    <div class="modal-card">
+        <div style="font-weight: bold; font-size: 1rem; color: #ffffff; margin-bottom: 5px;">🔐 Tipp-Schutz</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">Bitte gib das Passwort für <strong id="authTipperName">Langen</strong> ein:</div>
+        
+        <div style="margin-bottom: 15px;">
+            <input type="password" id="authPasswordInput" class="form-control" placeholder="Dein Passwort..." style="text-align: center; font-size: 1rem;">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" style="background: #21262d; margin-top: 0;" onclick="closeAuthModal()">Abbrechen</button>
+            <button class="btn" style="margin-top: 0;" onclick="verifyAndOpenTipModal()">Bestätigen</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: PASSWORT FESTLEGEN / ÄNDERN -->
+<div class="modal-overlay" id="passwordModal">
+    <div class="modal-card">
+        <div style="font-weight: bold; font-size: 1rem; color: #ffffff; margin-bottom: 5px;">🔑 Passwort einrichten</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">Vergib ein eigenes Passwort für <strong id="pwTipperName">Langen</strong> (wird sicher online gespeichert):</div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Neues Passwort</label>
+            <input type="password" id="newPasswordInput" class="form-control" placeholder="Passwort eingeben..." style="text-align: center; font-size: 1rem;">
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" style="background: #21262d; margin-top: 0;" onclick="closePasswordModal()">Abbrechen</button>
+            <button class="btn" style="margin-top: 0;" onclick="saveNewPassword()">Passwort speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: TIPP ABGEBEN -->
+<div class="modal-overlay" id="tipModal">
+    <div class="modal-card">
+        <div style="font-weight: bold; font-size: 1rem; color: #ffffff; margin-bottom: 5px;" id="modalMatchTitle">Tipp abgeben</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;" id="modalMatchSub">Tippe als: <strong id="modalTipperName">Langen</strong></div>
+        
+        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px;">
+            <div style="text-align: center;">
+                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 4px;" id="modalHomeLabel">Heim</label>
+                <input type="number" id="modalHomeTip" class="form-control" style="width: 70px; text-align: center; font-size: 1.2rem; font-weight: bold;" min="0" value="0">
+            </div>
+            <span style="font-size: 1.2rem; font-weight: bold; margin-top: 15px;">:</span>
+            <div style="text-align: center;">
+                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 4px;" id="modalAwayLabel">Gast</label>
+                <input type="number" id="modalAwayTip" class="form-control" style="width: 70px; text-align: center; font-size: 1.2rem; font-weight: bold;" min="0" value="0">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="btn" style="background: #21262d; margin-top: 0;" onclick="closeTipModal()">Abbrechen</button>
+            <button class="btn" style="margin-top: 0;" onclick="saveUserTip()">Tipp speichern</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: GESAMTWERTUNG -->
+<div class="modal-overlay" id="leaderboardModal">
+    <div class="modal-card" style="max-width: 450px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            <div style="font-weight: bold; font-size: 1.1rem; color: #ffffff;">🏆 Tipp-Gesamtwertung</div>
+            <button class="btn-danger" onclick="closeLeaderboardModal()">✕</button>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Punktesystem: Exaktes Ergebnis = 3 Pkt. | Richtige Tordifferenz = 2 Pkt. | Richtige Tendenz = 1 Pkt.</div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">Pl.</th>
+                        <th>Mitspieler</th>
+                        <th style="text-align: center;">Richtig</th>
+                        <th style="text-align: center;">Punkte</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardTableBody"></tbody>
+            </table>
+        </div>
+        <button class="btn" style="margin-top: 15px;" onclick="closeLeaderboardModal()">Schließen</button>
+    </div>
+</div>
+
 <script>
     const SUPABASE_URL = 'https://lhusylpjnujlqomougmg.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_yXEueWILvAq-Vm2VfTuYyg_BIQeE1KK';
@@ -453,28 +584,35 @@
     const ADMIN_PIN = "1919";
     let isAdmin = false;
 
-    // Fester, unveränderlicher Standard-Spielplan für alle 34 Spieltage
+    let currentTipper = localStorage.getItem('bundesliga_tipper') || 'Langen';
+    document.getElementById('tipperSelect').value = currentTipper;
+    document.getElementById('activeTipperDisplay').textContent = `Eingeloggt als: ${currentTipper}`;
+
+    const playerConfigs = {
+        'Langen': { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)', border: '#f59e0b' },
+        'Kokser': { color: '#10b981', bg: 'rgba(16, 185, 129, 0.2)', border: '#10b981' }
+    };
+
+    let playerPasswords = {};
+    let allTips = [];
+    let pendingMatchId = null;
+    let pendingHome = '';
+    let pendingAway = '';
+
+    function changeTipper(name) {
+        currentTipper = name;
+        localStorage.setItem('bundesliga_tipper', name);
+        document.getElementById('activeTipperDisplay').textContent = `Eingeloggt als: ${currentTipper}`;
+        renderMatchdayTable();
+    }
+
     let leagueData = {
         currentMatchday: 1,
         teams: [
-            "FC Bayern München",
-            "Borussia Dortmund",
-            "Bayer 04 Leverkusen",
-            "RB Leipzig",
-            "Eintracht Frankfurt",
-            "VfB Stuttgart",
-            "Borussia Mönchengladbach",
-            "Werder Bremen",
-            "Sport-Club Freiburg",
-            "TSG Hoffenheim",
-            "1. FC Union Berlin",
-            "FC Augsburg",
-            "1. FSV Mainz 05",
-            "1. FC Köln",
-            "Hamburger SV",
-            "FC Schalke 04",
-            "SV Elversberg",
-            "SC Paderborn 07"
+            "FC Bayern München", "Borussia Dortmund", "Bayer 04 Leverkusen", "RB Leipzig", 
+            "Eintracht Frankfurt", "VfB Stuttgart", "Borussia Mönchengladbach", "Werder Bremen", 
+            "Sport-Club Freiburg", "TSG Hoffenheim", "1. FC Union Berlin", "FC Augsburg", 
+            "1. FSV Mainz 05", "1. FC Köln", "Hamburger SV", "FC Schalke 04", "SV Elversberg", "SC Paderborn 07"
         ],
         matches: {
             "1": [
@@ -854,23 +992,9 @@
         }
     };
 
-    // Automatisches Finden des aktuellen Spieltags beim Start
     function initMatchday() {
         let savedDay = localStorage.getItem('bundesliga_current_matchday');
-        if (savedDay) {
-            leagueData.currentMatchday = parseInt(savedDay);
-            return;
-        }
-
-        let todayStr = new Date().toISOString().split('T')[0];
-        for (let mDay in leagueData.matches) {
-            let matches = leagueData.matches[mDay];
-            let hasToday = matches.some(m => m.date === todayStr);
-            if (hasToday) {
-                leagueData.currentMatchday = parseInt(mDay);
-                return;
-            }
-        }
+        if (savedDay) leagueData.currentMatchday = parseInt(savedDay);
     }
     initMatchday();
 
@@ -892,24 +1016,16 @@
         }
     }
 
-    // Lädt alle Spiel-Ergebnisse aus Supabase und matcht sie robust über die Teamnamen (unabhängig vom Datenbank-Spieltag)
-    async function loadFromCloud() {
+    async function loadFromCloud(showAlert = false) {
         try {
-            let { data, error } = await supabaseClient
-                .from('bundesliga_spiele')
-                .select('*');
+            let [matchesRes, tipsRes, pwRes] = await Promise.all([
+                supabaseClient.from('bundesliga_spiele').select('*'),
+                supabaseClient.from('bundesliga_tipps').select('*'),
+                supabaseClient.from('bundesliga_passwoerter').select('*')
+            ]);
 
-            if (data && Array.isArray(data)) {
-                for (let mDay in leagueData.matches) {
-                    leagueData.matches[mDay].forEach(m => {
-                        delete m.homeScore;
-                        delete m.awayScore;
-                        delete m.bayernScorers;
-                        delete m.scorers;
-                    });
-                }
-
-                data.forEach(row => {
+            if (matchesRes.data && Array.isArray(matchesRes.data)) {
+                matchesRes.data.forEach(row => {
                     let dbHome = row.home_team ? row.home_team.toLowerCase().trim() : "";
                     let dbAway = row.away_team ? row.away_team.toLowerCase().trim() : "";
 
@@ -919,6 +1035,7 @@
                             m.away.toLowerCase().trim() === dbAway
                         );
                         if (matchObj) {
+                            matchObj.match_id = row.match_id;
                             matchObj.homeScore = row.home_score;
                             matchObj.awayScore = row.away_score;
                             matchObj.bayernScorers = row.bayern_scorers;
@@ -928,22 +1045,35 @@
                     }
                 });
             }
+
+            if (tipsRes.data) allTips = tipsRes.data;
+
+            if (pwRes.data) {
+                playerPasswords = {};
+                pwRes.data.forEach(p => {
+                    playerPasswords[p.player_name] = p.password;
+                });
+            }
+
+            if (showAlert) {
+                alert("Daten erfolgreich aktualisiert!");
+            }
         } catch (e) {
-            console.log('Supabase Ladehinweis:', e);
+            console.log('Ladehinweis:', e);
+            if (showAlert) alert("Fehler beim Aktualisieren der Daten.");
         }
         renderAll();
     }
 
-    // Speichert geänderte Ergebnisse in die Tabelle
     async function saveToCloud() {
         try {
             let rowsToUpsert = [];
-
             for (let mDay in leagueData.matches) {
                 leagueData.matches[mDay].forEach(m => {
+                    let matchIdStr = m.match_id || ("s" + mDay + "_" + m.home.trim().toLowerCase().replace(/[^a-z0-9]/g, "_") + "_vs_" + m.away.trim().toLowerCase().replace(/[^a-z0-9]/g, "_"));
+                    m.match_id = matchIdStr;
+
                     if (m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null) {
-                        let matchIdStr = "s" + mDay + "_" + m.home.trim().toLowerCase().replace(/[^a-z0-9]/g, "_") + "_vs_" + m.away.trim().toLowerCase().replace(/[^a-z0-9]/g, "_");
-                        
                         rowsToUpsert.push({
                             match_id: matchIdStr,
                             matchday: parseInt(mDay),
@@ -956,20 +1086,10 @@
                     }
                 });
             }
-
             if (rowsToUpsert.length > 0) {
-                let { error } = await supabaseClient
-                    .from('bundesliga_spiele')
-                    .upsert(rowsToUpsert, { onConflict: 'match_id' });
-                
-                if (error) {
-                    console.error('Supabase Speicherfehler:', error.message);
-                    alert('Fehler beim Speichern in Supabase: ' + error.message);
-                }
+                await supabaseClient.from('bundesliga_spiele').upsert(rowsToUpsert, { onConflict: 'match_id' });
             }
-        } catch (e) {
-            console.error('Speicherfehler:', e);
-        }
+        } catch (e) { console.error(e); }
     }
 
     function changeMatchday(amount) {
@@ -981,7 +1101,7 @@
     function renderAll() {
         document.getElementById('matchdayDisplay').textContent = `Spieltag ${leagueData.currentMatchday}`;
         document.getElementById('adminMatchdayLabel').textContent = `Spieltag ${leagueData.currentMatchday}`;
-        document.getElementById('matchdayTableHeader').textContent = `Spieltag ${leagueData.currentMatchday} — Spiele & Ergebnisse`;
+        document.getElementById('matchdayTableHeader').textContent = `Spieltag ${leagueData.currentMatchday} — Spiele, Ergebnisse & Tipps`;
         
         renderMatchdayTable();
         renderTable();
@@ -989,81 +1109,195 @@
         if (isAdmin) renderInputForm();
     }
 
-    function renderBayernStats() {
-        let played = 0, won = 0, draw = 0, lost = 0, goalsFor = 0, goalsAgainst = 0, points = 0;
-        let scorerMap = {};
+    function openPasswordModal() {
+        document.getElementById('pwTipperName').textContent = currentTipper;
+        document.getElementById('newPasswordInput').value = '';
+        document.getElementById('passwordModal').style.display = 'flex';
+    }
+
+    function closePasswordModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+    }
+
+    async function saveNewPassword() {
+        let newPw = document.getElementById('newPasswordInput').value.trim();
+        if (!newPw) {
+            alert("Bitte ein gültiges Passwort eingeben!");
+            return;
+        }
+
+        let { error } = await supabaseClient.from('bundesliga_passwoerter').upsert({
+            player_name: currentTipper,
+            password: newPw
+        }, { onConflict: 'player_name' });
+
+        if (error) {
+            alert("Fehler beim Speichern des Passworts: " + error.message);
+        } else {
+            playerPasswords[currentTipper] = newPw;
+            sessionStorage.setItem('auth_' + currentTipper, 'true');
+            alert(`Passwort für ${currentTipper} erfolgreich gespeichert & freigeschaltet!`);
+            closePasswordModal();
+        }
+    }
+
+    function requestTipAuthentication(matchId, homeTeam, awayTeam) {
+        pendingMatchId = matchId;
+        pendingHome = homeTeam;
+        pendingAway = awayTeam;
+
+        let registeredPw = playerPasswords[currentTipper];
+
+        if (!registeredPw) {
+            let setupNow = confirm(`Für "${currentTipper}" ist noch kein Passwort hinterlegt. Möchtest du jetzt eines einrichten?`);
+            if (setupNow) {
+                openPasswordModal();
+                return;
+            } else {
+                openTipModalDirect(matchId, homeTeam, awayTeam);
+                return;
+            }
+        }
+
+        if (sessionStorage.getItem('auth_' + currentTipper) === 'true') {
+            openTipModalDirect(matchId, homeTeam, awayTeam);
+            return;
+        }
+
+        document.getElementById('authTipperName').textContent = currentTipper;
+        document.getElementById('authPasswordInput').value = '';
+        document.getElementById('authModal').style.display = 'flex';
+    }
+
+    function closeAuthModal() {
+        document.getElementById('authModal').style.display = 'none';
+        pendingMatchId = null;
+    }
+
+    function verifyAndOpenTipModal() {
+        let enteredPw = document.getElementById('authPasswordInput').value;
+        let registeredPw = playerPasswords[currentTipper];
+
+        if (enteredPw === registeredPw) {
+            sessionStorage.setItem('auth_' + currentTipper, 'true');
+            closeAuthModal();
+            openTipModalDirect(pendingMatchId, pendingHome, pendingAway);
+        } else {
+            alert("Falsches Passwort!");
+        }
+    }
+
+    function openTipModalDirect(matchId, homeTeam, awayTeam) {
+        activeModalMatchId = matchId;
+        document.getElementById('modalMatchTitle').textContent = `${homeTeam} vs ${awayTeam}`;
+        document.getElementById('modalHomeLabel').textContent = homeTeam;
+        document.getElementById('modalAwayLabel').textContent = awayTeam;
+        document.getElementById('modalTipperName').textContent = currentTipper;
+
+        let existing = allTips.find(t => t.match_id === matchId && t.player_name === currentTipper);
+        document.getElementById('modalHomeTip').value = existing ? existing.home_tip : 0;
+        document.getElementById('modalAwayTip').value = existing ? existing.away_tip : 0;
+
+        document.getElementById('tipModal').style.display = 'flex';
+    }
+
+    let activeModalMatchId = null;
+
+    function closeTipModal() {
+        document.getElementById('tipModal').style.display = 'none';
+        activeModalMatchId = null;
+    }
+
+    async function saveUserTip() {
+        if (!activeModalMatchId) return;
+        let hTip = parseInt(document.getElementById('modalHomeTip').value);
+        let aTip = parseInt(document.getElementById('modalAwayTip').value);
+
+        if (isNaN(hTip) || isNaN(aTip)) {
+            alert("Bitte gültige Zahlen eingeben!");
+            return;
+        }
+
+        let payload = {
+            match_id: activeModalMatchId,
+            player_name: currentTipper,
+            home_tip: hTip,
+            away_tip: aTip
+        };
+
+        let { error } = await supabaseClient.from('bundesliga_tipps').upsert(payload, { onConflict: 'match_id,player_name' });
+        if (error) {
+            alert('Fehler beim Speichern des Tipps: ' + error.message);
+        } else {
+            closeTipModal();
+            let { data } = await supabaseClient.from('bundesliga_tipps').select('*');
+            if (data) allTips = data;
+            renderMatchdayTable();
+        }
+    }
+
+    function calculatePoints(tipH, tipA, resH, resA) {
+        if (resH === null || resA === null || resH === undefined || resA === undefined) return 0;
+        if (tipH === resH && tipA === resA) return 3;
+
+        let tipDiff = tipH - tipA;
+        let resDiff = resH - resA;
+        if (tipDiff === resDiff) return 2;
+
+        let tipTendency = tipH > tipA ? 'home' : (tipH < tipA ? 'away' : 'draw');
+        let resTendency = resH > resA ? 'home' : (resH < resA ? 'draw' : 'away');
+        if (tipTendency === resTendency) return 1;
+
+        return 0;
+    }
+
+    function openLeaderboardModal() {
+        let scores = {};
+        ['Langen', 'Kokser'].forEach(p => {
+            scores[p] = { points: 0, exact: 0 };
+        });
 
         Object.values(leagueData.matches).forEach(matchList => {
             if (!Array.isArray(matchList)) return;
             matchList.forEach(m => {
-                let isHome = m.home === "FC Bayern München";
-                let isAway = m.away === "FC Bayern München";
-                if (!isHome && !isAway) return;
+                if (!m.match_id) return;
+                let hasRes = m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null;
+                if (!hasRes) return;
 
-                if (m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null) {
-                    played++;
-                    let myGoals = isHome ? m.homeScore : m.awayScore;
-                    let oppGoals = isHome ? m.awayScore : m.homeScore;
-                    goalsFor += myGoals;
-                    goalsAgainst += oppGoals;
-
-                    if (myGoals > oppGoals) { won++; points += 3; }
-                    else if (myGoals === oppGoals) { draw++; points += 1; }
-                    else { lost++; }
-
-                    let scText = m.bayernScorers || m.scorers;
-                    if (scText && scText.trim() !== "") {
-                        let parts = scText.split(',');
-                        parts.forEach(p => {
-                            p = p.trim();
-                            let matchNum = p.match(/\((\d+)\)/);
-                            let count = matchNum ? parseInt(matchNum[1]) : 1;
-                            let name = p.replace(/\s*\(\d+\)/, '').trim();
-                            if (name) {
-                                scorerMap[name] = (scorerMap[name] || 0) + count;
-                            }
-                        });
+                let matchTips = allTips.filter(t => t.match_id === m.match_id);
+                matchTips.forEach(t => {
+                    if (scores[t.player_name]) {
+                        let pts = calculatePoints(t.home_tip, t.away_tip, m.homeScore, m.awayScore);
+                        scores[t.player_name].points += pts;
+                        if (pts === 3) scores[t.player_name].exact++;
                     }
-                }
+                });
             });
         });
 
-        let grid = document.getElementById('bayernStatsGrid');
-        grid.innerHTML = `
-            <div class="stat-card"><div class="stat-label">Spiele</div><div class="stat-value">${played}</div></div>
-            <div class="stat-card"><div class="stat-label">Siege</div><div class="stat-value" style="color: #3fb950;">${won}</div></div>
-            <div class="stat-card"><div class="stat-label">Remis</div><div class="stat-value" style="color: #e3b341;">${draw}</div></div>
-            <div class="stat-card"><div class="stat-label">Niederlagen</div><div class="stat-value" style="color: #f85149;">${lost}</div></div>
-            <div class="stat-card"><div class="stat-label">Tore</div><div class="stat-value">${goalsFor}:${goalsAgainst}</div></div>
-            <div class="stat-card"><div class="stat-label">Punkte</div><div class="stat-value">${points}</div></div>
-        `;
+        let sorted = Object.entries(scores).sort((a, b) => b[1].points - a[1].points);
+        let tbody = document.getElementById('leaderboardTableBody');
+        tbody.innerHTML = '';
 
-        let scorersBody = document.getElementById('bayernScorersBody');
-        scorersBody.innerHTML = '';
-        let sortedScorers = Object.entries(scorerMap).sort((a, b) => b[1] - a[1]);
+        sorted.forEach(([player, data], idx) => {
+            let tr = document.createElement('tr');
+            let rankIcon = idx === 0 ? '👑' : `${idx + 1}.`;
+            if (idx === 0) tr.classList.add('rank-first');
 
-        if (sortedScorers.length === 0) {
-            scorersBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 10px;">Noch keine Torschützen eingetragen.</td></tr>`;
-        } else {
-            sortedScorers.forEach(([player, goals]) => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `<td>${player}</td><td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${goals}</td>`;
-                scorersBody.appendChild(tr);
-            });
-        }
+            tr.innerHTML = `
+                <td><strong>${rankIcon}</strong></td>
+                <td><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${playerConfigs[player].color}; margin-right:5px;"></span>${player}</td>
+                <td style="text-align: center;">${data.exact}x exakt</td>
+                <td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${data.points} Pkt.</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('leaderboardModal').style.display = 'flex';
     }
 
-    function isMatchLive(matchDate, matchTime) {
-        if (!matchDate || !matchTime) return false;
-        try {
-            let matchStart = new Date(`${matchDate}T${matchTime}:00`);
-            let now = new Date();
-            let diffMs = now - matchStart;
-            let diffMins = diffMs / (1000 * 60);
-            return diffMins >= 0 && diffMins <= 120;
-        } catch (e) {
-            return false;
-        }
+    function closeLeaderboardModal() {
+        document.getElementById('leaderboardModal').style.display = 'none';
     }
 
     function renderMatchdayTable() {
@@ -1080,29 +1314,27 @@
             let homeClass = m.home === "FC Bayern München" ? 'bayern-highlight' : '';
             let awayClass = m.away === "FC Bayern München" ? 'bayern-highlight' : '';
 
-            let liveNow = isMatchLive(m.date, m.time);
+            let matchId = m.match_id || ("s" + leagueData.currentMatchday + "_" + m.home.trim().toLowerCase().replace(/[^a-z0-9]/g, "_") + "_vs_" + m.away.trim().toLowerCase().replace(/[^a-z0-9]/g, "_"));
+            m.match_id = matchId;
 
-            let resultDisplay = '';
-            if (hasResult) {
-                if (liveNow) {
-                    resultDisplay = `<strong>${m.homeScore}:${m.awayScore}</strong> <span class="live-badge"><span class="live-dot"></span>LIVE</span>`;
-                } else {
-                    resultDisplay = `<strong>${m.homeScore}:${m.awayScore}</strong>`;
-                }
-            } else {
-                if (liveNow) {
-                    resultDisplay = `<span class="live-badge"><span class="live-dot"></span>LIVE</span>`;
-                } else {
-                    resultDisplay = `<span style="color: var(--text-muted); font-style: italic;">vs</span>`;
-                }
-            }
-
+            let resultDisplay = hasResult ? `<strong>${m.homeScore}:${m.awayScore}</strong>` : `<span style="color: var(--text-muted); font-style: italic;">vs</span>`;
             let scorersText = m.bayernScorers || m.scorers || "";
             if (hasResult && scorersText.trim() !== "") {
                 resultDisplay += `<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">⚽ ${scorersText}</div>`;
             }
 
-            let deleteBtn = isAdmin ? `<button class="btn-danger" onclick="deleteMatchResult(${idx})" title="Ergebnis löschen">✕</button>` : '';
+            let matchTips = allTips.filter(t => t.match_id === matchId);
+            let tipsHtml = `<div class="tips-container">`;
+            matchTips.forEach(t => {
+                let cfg = playerConfigs[t.player_name] || { color: '#fff', bg: '#333' };
+                let ptsStr = "";
+                if (hasResult) {
+                    let pts = calculatePoints(t.home_tip, t.away_tip, m.homeScore, m.awayScore);
+                    ptsStr = ` (${pts}p)`;
+                }
+                tipsHtml += `<span class="tip-badge" style="background:${cfg.bg}; color:${cfg.color}; border:1px solid ${cfg.border};">${t.player_name}: ${t.home_tip}:${t.away_tip}${ptsStr}</span>`;
+            });
+            tipsHtml += `</div>`;
 
             let tr = document.createElement('tr');
             if (isBayernMatch) tr.classList.add('bayern-match-row');
@@ -1112,7 +1344,11 @@
                 <td class="${homeClass}" style="text-align: right;">${m.home}</td>
                 <td style="text-align: center;">${resultDisplay}</td>
                 <td class="${awayClass}">${m.away}</td>
-                <td style="text-align: center;">${deleteBtn}</td>
+                <td style="text-align: center;">
+                    <button class="matchday-btn" style="font-size: 0.7rem; padding: 4px 8px;" onclick="requestTipAuthentication('${matchId}', '${m.home.replace(/'/g, "\\'")}', '${m.away.replace(/'/g, "\\'")}')">🎯 Tippen</button>
+                    ${tipsHtml}
+                </td>
+                <td style="text-align: center;">${isAdmin ? `<button class="btn-danger" onclick="deleteMatchResult(${idx})">✕</button>` : ''}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -1121,131 +1357,90 @@
     function renderTable() {
         let tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
-
         let stats = {};
-        leagueData.teams.forEach(t => {
-            stats[t] = { name: t, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 };
-        });
-
-        function cleanTeamName(name) {
-            if (!name) return "";
-            let n = name.trim();
-            if (n === "SV Werder Bremen" && stats["Werder Bremen"]) return "Werder Bremen";
-            if (n === "Werder Bremen" && stats["SV Werder Bremen"]) return "SV Werder Bremen";
-            return n;
-        }
+        leagueData.teams.forEach(t => { stats[t] = { name: t, played: 0, won: 0, draw: 0, lost: 0, goalsFor: 0, goalsAgainst: 0, points: 0 }; });
 
         Object.values(leagueData.matches).forEach(matchList => {
             if (!Array.isArray(matchList)) return;
             matchList.forEach(m => {
-                let hScore = m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : null;
-                let aScore = m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : null;
-
-                if (hScore === null || aScore === null) return;
-
-                let homeTeam = cleanTeamName(m.home);
-                let awayTeam = cleanTeamName(m.away);
-
-                if (!stats[homeTeam] || !stats[awayTeam]) return;
-                
-                let homeScore = parseInt(hScore);
-                let awayScore = parseInt(aScore);
-
-                stats[homeTeam].played++;
-                stats[awayTeam].played++;
-                stats[homeTeam].goalsFor += homeScore;
-                stats[homeTeam].goalsAgainst += awayScore;
-                stats[awayTeam].goalsFor += awayScore;
-                stats[awayTeam].goalsAgainst += homeScore;
-
-                if (homeScore > awayScore) {
-                    stats[homeTeam].won++;
-                    stats[homeTeam].points += 3;
-                    stats[awayTeam].lost++;
-                } else if (homeScore < awayScore) {
-                    stats[awayTeam].won++;
-                    stats[awayTeam].points += 3;
-                    stats[homeTeam].lost++;
-                } else {
-                    stats[homeTeam].draw++;
-                    stats[homeTeam].points += 1;
-                    stats[awayTeam].draw++;
-                    stats[awayTeam].points += 1;
-                }
+                if (m.homeScore === undefined || m.homeScore === null || m.awayScore === undefined || m.awayScore === null) return;
+                let h = m.home, a = m.away;
+                if (!stats[h] || !stats[a]) return;
+                stats[h].played++; stats[a].played++;
+                stats[h].goalsFor += m.homeScore; stats[h].goalsAgainst += m.awayScore;
+                stats[a].goalsFor += m.awayScore; stats[a].goalsAgainst += m.homeScore;
+                if (m.homeScore > m.awayScore) { stats[h].won++; stats[h].points += 3; stats[a].lost++; }
+                else if (m.homeScore < m.awayScore) { stats[a].won++; stats[a].points += 3; stats[h].lost++; }
+                else { stats[h].draw++; stats[h].points += 1; stats[a].draw++; stats[a].points += 1; }
             });
         });
 
-        let sorted = Object.values(stats).sort((a, b) => {
-            if (b.points !== a.points) return b.points - a.points;
-            let diffB = b.goalsFor - b.goalsAgainst;
-            let diffA = a.goalsFor - a.goalsAgainst;
-            if (diffB !== diffA) return diffB - diffA;
-            return b.goalsFor - a.goalsFor;
-        });
-
+        let sorted = Object.values(stats).sort((a, b) => b.points !== a.points ? b.points - a.points : (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst));
         sorted.forEach((s, idx) => {
             let tr = document.createElement('tr');
             if (idx === 0) tr.classList.add('rank-first');
-            else if (idx >= sorted.length - 3 && sorted.length > 3) tr.classList.add('rank-last');
+            else if (idx >= sorted.length - 3) tr.classList.add('rank-last');
             if (s.name === "FC Bayern München") tr.classList.add('bayern-team-row');
-
             let diff = s.goalsFor - s.goalsAgainst;
-
-            tr.innerHTML = `
-                <td><strong>${idx + 1}.</strong></td>
-                <td>${s.name}</td>
-                <td style="text-align: center;">${s.played}</td>
-                <td style="text-align: center;">${s.won}</td>
-                <td style="text-align: center;">${s.draw}</td>
-                <td style="text-align: center;">${s.lost}</td>
-                <td style="text-align: center;">${s.goalsFor}:${s.goalsAgainst}</td>
-                <td style="text-align: center;">${diff > 0 ? '+' : ''}${diff}</td>
-                <td style="text-align: center; font-weight: bold;">${s.points}</td>
-            `;
+            tr.innerHTML = `<td><strong>${idx + 1}.</strong></td><td>${s.name}</td><td style="text-align: center;">${s.played}</td><td style="text-align: center;">${s.won}</td><td style="text-align: center;">${s.draw}</td><td style="text-align: center;">${s.lost}</td><td style="text-align: center;">${s.goalsFor}:${s.goalsAgainst}</td><td style="text-align: center;">${diff > 0 ? '+' : ''}${diff}</td><td style="text-align: center; font-weight: bold;">${s.points}</td>`;
             tbody.appendChild(tr);
         });
+    }
+
+    function renderBayernStats() {
+        let played = 0, won = 0, draw = 0, lost = 0, goalsFor = 0, goalsAgainst = 0, points = 0;
+        let scorerMap = {};
+        Object.values(leagueData.matches).forEach(matchList => {
+            if (!Array.isArray(matchList)) return;
+            matchList.forEach(m => {
+                let isHome = m.home === "FC Bayern München", isAway = m.away === "FC Bayern München";
+                if (!isHome && !isAway) return;
+                if (m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null) {
+                    played++;
+                    let myG = isHome ? m.homeScore : m.awayScore, oppG = isHome ? m.awayScore : m.homeScore;
+                    goalsFor += myG; goalsAgainst += oppG;
+                    if (myG > oppG) { won++; points += 3; } else if (myG === oppG) { draw++; points += 1; } else { lost++; }
+                    let scText = m.bayernScorers || m.scorers;
+                    if (scText) {
+                        scText.split(',').forEach(p => {
+                            p = p.trim();
+                            let matchNum = p.match(/\((\d+)\)/);
+                            let count = matchNum ? parseInt(matchNum[1]) : 1;
+                            let name = p.replace(/\s*\(\d+\)/, '').trim();
+                            if (name) scorerMap[name] = (scorerMap[name] || 0) + count;
+                        });
+                    }
+                }
+            });
+        });
+        document.getElementById('bayernStatsGrid').innerHTML = `
+            <div class="stat-card"><div class="stat-label">Spiele</div><div class="stat-value">${played}</div></div>
+            <div class="stat-card"><div class="stat-label">Siege</div><div class="stat-value" style="color: #3fb950;">${won}</div></div>
+            <div class="stat-card"><div class="stat-label">Remis</div><div class="stat-value" style="color: #e3b341;">${draw}</div></div>
+            <div class="stat-card"><div class="stat-label">Niederlagen</div><div class="stat-value" style="color: #f85149;">${lost}</div></div>
+            <div class="stat-card"><div class="stat-label">Tore</div><div class="stat-value">${goalsFor}:${goalsAgainst}</div></div>
+            <div class="stat-card"><div class="stat-label">Punkte</div><div class="stat-value">${points}</div></div>
+        `;
+        let scorersBody = document.getElementById('bayernScorersBody');
+        scorersBody.innerHTML = '';
+        let sortedScorers = Object.entries(scorerMap).sort((a, b) => b[1] - a[1]);
+        if (sortedScorers.length === 0) scorersBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 10px;">Noch keine Torschützen eingetragen.</td></tr>`;
+        else sortedScorers.forEach(([player, goals]) => { scorersBody.innerHTML += `<tr><td>${player}</td><td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${goals}</td></tr>`; });
     }
 
     function renderInputForm() {
         let container = document.getElementById('matchInputsContainer');
         container.innerHTML = '';
         let existingMatches = leagueData.matches[leagueData.currentMatchday] || [];
-
         existingMatches.forEach((m, idx) => {
             let card = document.createElement('div');
             card.className = 'match-input-card';
-            
-            let currentScorers = m.bayernScorers || m.scorers || '';
-            let scorersInputHtml = `
-                <div class="form-group" style="grid-column: span 2; margin-top: 6px;">
-                    <label>Torschützen (z.B. Schick, Wirtz)</label>
-                    <input type="text" id="bs_${idx}" class="form-control" value="${currentScorers}" placeholder="Torschützen eintragen...">
-                </div>
-            `;
-
             card.innerHTML = `
-                <div style="font-size: 0.8rem; color: var(--bayern-bright-red); font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between;">
-                    <span>Partie ${idx + 1}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-muted);">${m.date ? m.date.split('-').reverse().join('.') : ''} ${m.time || ''} Uhr</span>
-                </div>
+                <div style="font-size: 0.8rem; color: var(--bayern-bright-red); font-weight: bold; margin-bottom: 8px;">Partie ${idx + 1} (${m.home} vs ${m.away})</div>
                 <div class="form-grid">
-                    <div class="form-group form-group-team">
-                        <label>Heim</label>
-                        <span style="font-size: 0.8rem; font-weight: bold;">${m.home}</span>
-                    </div>
-                    <div class="form-group form-group-team">
-                        <label>Gast</label>
-                        <span style="font-size: 0.8rem; font-weight: bold;">${m.away}</span>
-                    </div>
-                    <div class="form-group">
-                        <label>Tore Heim</label>
-                        <input type="number" id="hs_${idx}" class="form-control" value="${m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : ''}" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label>Tore Gast</label>
-                        <input type="number" id="as_${idx}" class="form-control" value="${m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : ''}" min="0">
-                    </div>
-                    ${scorersInputHtml}
+                    <div class="form-group"><label>Tore Heim</label><input type="number" id="hs_${idx}" class="form-control" value="${m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : ''}" min="0"></div>
+                    <div class="form-group"><label>Tore Gast</label><input type="number" id="as_${idx}" class="form-control" value="${m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : ''}" min="0"></div>
+                    <div class="form-group" style="grid-column: span 2;"><label>Torschützen</label><input type="text" id="bs_${idx}" class="form-control" value="${m.bayernScorers || m.scorers || ''}"></div>
                 </div>
             `;
             container.appendChild(card);
@@ -1258,19 +1453,12 @@
             let hsVal = document.getElementById(`hs_${idx}`).value;
             let asVal = document.getElementById(`as_${idx}`).value;
             let bsInput = document.getElementById(`bs_${idx}`);
-
             if (hsVal !== '' && asVal !== '') {
                 existingMatches[idx].homeScore = parseInt(hsVal);
                 existingMatches[idx].awayScore = parseInt(asVal);
-                if (bsInput) {
-                    existingMatches[idx].bayernScorers = bsInput.value;
-                    existingMatches[idx].scorers = bsInput.value;
-                }
+                if (bsInput) existingMatches[idx].bayernScorers = existingMatches[idx].scorers = bsInput.value;
             } else {
-                delete existingMatches[idx].homeScore;
-                delete existingMatches[idx].awayScore;
-                delete existingMatches[idx].bayernScorers;
-                delete existingMatches[idx].scorers;
+                delete existingMatches[idx].homeScore; delete existingMatches[idx].awayScore; delete existingMatches[idx].bayernScorers; delete existingMatches[idx].scorers;
             }
         }
         await saveToCloud();
@@ -1281,30 +1469,14 @@
     async function deleteMatchResult(idx) {
         let existingMatches = leagueData.matches[leagueData.currentMatchday];
         if (existingMatches && existingMatches[idx]) {
-            delete existingMatches[idx].homeScore;
-            delete existingMatches[idx].awayScore;
-            delete existingMatches[idx].bayernScorers;
-            delete existingMatches[idx].scorers;
+            delete existingMatches[idx].homeScore; delete existingMatches[idx].awayScore; delete existingMatches[idx].bayernScorers; delete existingMatches[idx].scorers;
             await saveToCloud();
             renderAll();
         }
     }
 
-    // App beim Start initialisieren und Daten laden
+    // Init beim Start
     loadFromCloud();
-
-    // Auto-Refresh (lädt im Hintergrund alle 30 Sek. neu, wenn heute ein Spiel stattfindet und du nicht im Admin-Modus bist)
-    setInterval(() => {
-        if (isAdmin) return;
-
-        let todayStr = new Date().toISOString().split('T')[0];
-        let matchesToday = leagueData.matches[leagueData.currentMatchday] || [];
-        let hasMatchToday = matchesToday.some(m => m.date === todayStr);
-
-        if (hasMatchToday) {
-            loadFromCloud();
-        }
-    }, 30000);
 </script>
 
 </body>
