@@ -43,6 +43,37 @@
             box-shadow: 0 4px 20px rgba(220, 5, 45, 0.15);
         }
 
+        /* Banner Wrapper: Zentriert das Banner in der Kachel */
+        .banner-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            background-color: var(--card-bg); /* Gleiche Farbe wie die App-Kachel */
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        /* Banner Styling: Roter Rahmen schmiegt sich exakt um das Bild */
+        .app-banner {
+            width: auto;
+            max-width: 100%;
+            height: auto;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 2px solid var(--bayern-red);
+            box-shadow: 0 4px 15px rgba(220, 5, 45, 0.3);
+            display: block;
+        }
+
+        /* Optimierung für Handys */
+        @media (max-width: 600px) {
+            .app-banner {
+                max-height: 140px;
+            }
+        }
+
         .title-row {
             display: flex;
             align-items: center;
@@ -373,6 +404,11 @@
 <body>
 
 <div class="container">
+    <!-- Banner mit passgenauem Rahmen und App-Hintergrund drumherum -->
+    <div class="banner-wrapper">
+        <img src="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/banner_Bayern.png" alt="FC Bayern Banner" class="app-banner">
+    </div>
+
     <div class="title-row">
         <img src="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png" alt="FC Bayern Logo" class="header-logo">
         <h2>FC Bayern <span>München</span></h2>
