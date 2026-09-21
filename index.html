@@ -48,7 +48,7 @@
             width: 100%;
             display: flex;
             justify-content: center;
-            background-color: var(--card-bg); /* Gleiche Farbe wie die App-Kachel */
+            background-color: var(--card-bg);
             border-radius: 8px;
             margin-bottom: 15px;
             overflow: hidden;
@@ -272,6 +272,22 @@
             font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
+        }
+
+        /* Spielerfoto in der Torschützenliste (mit contain, damit nichts abgeschnitten wird) */
+        .scorer-row-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .player-mini-avatar {
+            width: 48px;
+            height: 34px;
+            border-radius: 5px;
+            object-fit: contain;
+            background: #21262d;
+            border: 1px solid var(--bayern-red);
+            flex-shrink: 0;
         }
 
         /* Tipp-Badges unter Partien */
@@ -631,6 +647,7 @@
 
     let playerPasswords = {};
     let allTips = [];
+    let playerPhotos = {};
     let pendingMatchId = null;
     let pendingHome = '';
     let pendingAway = '';
@@ -1054,10 +1071,11 @@
 
     async function loadFromCloud(showAlert = false) {
         try {
-            let [matchesRes, tipsRes, pwRes] = await Promise.all([
+            let [matchesRes, tipsRes, pwRes, photosRes] = await Promise.all([
                 supabaseClient.from('bundesliga_spiele').select('*'),
                 supabaseClient.from('bundesliga_tipps').select('*'),
-                supabaseClient.from('bundesliga_passwoerter').select('*')
+                supabaseClient.from('bundesliga_passwoerter').select('*'),
+                supabaseClient.from('bundesliga_spieler_fotos').select('*')
             ]);
 
             if (matchesRes.data && Array.isArray(matchesRes.data)) {
@@ -1088,6 +1106,15 @@
                 playerPasswords = {};
                 pwRes.data.forEach(p => {
                     playerPasswords[p.player_name] = p.password;
+                });
+            }
+
+            if (photosRes.data) {
+                playerPhotos = {};
+                photosRes.data.forEach(item => {
+                    if (item.player_name && item.photo_url) {
+                        playerPhotos[item.player_name.trim().toLowerCase()] = item.photo_url;
+                    }
                 });
             }
 
@@ -1460,8 +1487,29 @@
         let scorersBody = document.getElementById('bayernScorersBody');
         scorersBody.innerHTML = '';
         let sortedScorers = Object.entries(scorerMap).sort((a, b) => b[1] - a[1]);
-        if (sortedScorers.length === 0) scorersBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 10px;">Noch keine Torschützen eingetragen.</td></tr>`;
-        else sortedScorers.forEach(([player, goals]) => { scorersBody.innerHTML += `<tr><td>${player}</td><td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${goals}</td></tr>`; });
+        
+        if (sortedScorers.length === 0) {
+            scorersBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 10px;">Noch keine Torschützen eingetragen.</td></tr>`;
+        } else {
+            sortedScorers.forEach(([player, goals]) => {
+                let pKey = player.trim().toLowerCase();
+                let photoUrl = playerPhotos[pKey];
+                
+                let avatarHtml = photoUrl 
+                    ? `<img src="${photoUrl}" alt="${player}" class="player-mini-avatar">` 
+                    : `<div class="player-mini-avatar" style="display:flex; align-items:center; justify-content:center; font-size:0.6rem; color:var(--text-muted);">⚽</div>`;
+
+                scorersBody.innerHTML += `
+                    <td>
+                        <div class="scorer-row-content">
+                            ${avatarHtml}
+                            <span>${player}</span>
+                        </div>
+                    </td>
+                    <td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${goals}</td>
+                `;
+            });
+        }
     }
 
     function renderInputForm() {
