@@ -563,7 +563,7 @@
         <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">Bitte gib das Passwort für <strong id="authTipperName">Langen</strong> ein:</div>
         
         <div style="margin-bottom: 15px;">
-            <input type="password" id="authPasswordInput" class="form-control" placeholder="Dein Passwort..." style="text-align: center; font-size: 1rem;">
+            <input type="password" id="authPasswordInput" class="form-control" placeholder="Dein Passwort..." style="text-align: center; font-size: 1rem;" onkeydown="if(event.key === 'Enter') verifyAndOpenTipModal()">
         </div>
 
         <div style="display: flex; gap: 10px;">
@@ -581,7 +581,7 @@
         
         <div style="margin-bottom: 15px;">
             <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Neues Passwort</label>
-            <input type="password" id="newPasswordInput" class="form-control" placeholder="Passwort eingeben..." style="text-align: center; font-size: 1rem;">
+            <input type="password" id="newPasswordInput" class="form-control" placeholder="Passwort eingeben..." style="text-align: center; font-size: 1rem;" onkeydown="if(event.key === 'Enter') saveNewPassword()">
         </div>
 
         <div style="display: flex; gap: 10px;">
@@ -1252,13 +1252,13 @@
                 openPasswordModal();
                 return;
             } else {
-                openTipModalDirect(matchId, homeTeam, awayTeam);
+                openTipModalDirect(pendingMatchId, pendingHome, pendingAway);
                 return;
             }
         }
 
         if (sessionStorage.getItem('auth_' + currentTipper) === 'true') {
-            openTipModalDirect(matchId, homeTeam, awayTeam);
+            openTipModalDirect(pendingMatchId, pendingHome, pendingAway);
             return;
         }
 
