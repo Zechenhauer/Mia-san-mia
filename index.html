@@ -1645,44 +1645,51 @@
                     
                     let parts = scText.split('-');
                     parts.forEach(part => {
-                        let teamContext = "";
-                        let scorerPart = part;
+                        part = part.trim();
+                        if (!part) return;
+
+                        let currentTeamContext = "";
+                        let playersChunk = part;
 
                         if (part.includes(':')) {
                             let sub = part.split(':');
                             let potentialTeam = sub[0].trim();
-                            if (m.home.toLowerCase().includes(potentialTeam.toLowerCase()) || m.away.toLowerCase().includes(potentialTeam.toLowerCase()) || potentialTeam.length <= 5) {
-                                teamContext = potentialTeam;
-                                scorerPart = sub.slice(1).join(':');
+                            if (potentialTeam.length <= 15 && !potentialTeam.includes(' ')) {
+                                currentTeamContext = potentialTeam;
+                                playersChunk = sub.slice(1).join(':');
                             }
                         }
 
-                        scorerPart.split(',').forEach(p => {
+                        playersChunk.split(',').forEach(p => {
                             p = p.trim();
                             if (!p || p.toLowerCase().includes('keine')) return;
+
+                            if (p.includes(':')) {
+                                let nameSub = p.split(':');
+                                currentTeamContext = nameSub[0].trim();
+                                p = nameSub.slice(1).join(':').trim();
+                            }
 
                             let matchNum = p.match(/\((\d+)\)/);
                             let count = matchNum ? parseInt(matchNum[1]) : 1;
                             let name = p.replace(/\s*\(\d+\)/, '').trim();
 
-                            if (name.includes(':')) {
-                                let nameSub = name.split(':');
-                                teamContext = nameSub[0].trim();
-                                name = nameSub.slice(1).join(':').trim();
-                            }
-
                             if (name && name.length > 1) {
-                                let currentTeam = teamContext;
-                                if (!currentTeam || currentTeam.length <= 5) {
+                                let assignedTeam = currentTeamContext;
+                                
+                                if (!assignedTeam || assignedTeam.length <= 2) {
                                     if (m.home === "FC Bayern München" || m.away === "FC Bayern München") {
-                                        currentTeam = "FC Bayern München";
+                                        assignedTeam = "FC Bayern München";
                                     } else {
-                                        currentTeam = m.home;
+                                        assignedTeam = m.home;
                                     }
+                                } else {
+                                    let matchTeamObj = [m.home, m.away].find(t => t.toLowerCase().includes(assignedTeam.toLowerCase()));
+                                    if (matchTeamObj) assignedTeam = matchTeamObj;
                                 }
 
                                 if (!globalScorerMap[name]) {
-                                    globalScorerMap[name] = { goals: 0, team: currentTeam };
+                                    globalScorerMap[name] = { goals: 0, team: assignedTeam };
                                 }
                                 globalScorerMap[name].goals += count;
                             }
