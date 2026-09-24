@@ -43,26 +43,68 @@
             box-shadow: 0 4px 20px rgba(220, 5, 45, 0.15);
         }
 
+        /* GEMEINSAME SLIDESHOW KACHEL (FESTES FORMAT WIE MANNSCHAFTSFOTO) */
         .banner-wrapper {
             width: 100%;
             display: flex;
-            justify-content: center;
-            background-color: var(--card-bg);
+            flex-direction: column;
+            align-items: center;
+            background-color: #0b0f19;
+            border: 2px solid var(--bayern-red);
             border-radius: 8px;
             margin-bottom: 15px;
-            overflow: hidden;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(220, 5, 45, 0.3);
+            position: relative;
         }
 
-        .app-banner {
+        .slideshow-container {
+            position: relative;
             width: 100%;
-            max-width: 100%;
-            height: auto;
-            object-fit: contain;
+            height: 380px; /* Feste einheitliche Höhe für alle Bilder im Mannschaftsformat */
+            background-color: #000000;
+            overflow: hidden;
             border-radius: 6px;
-            border: 2px solid var(--bayern-red);
-            box-shadow: 0 4px 15px rgba(220, 5, 45, 0.3);
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+
+        .slide-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain; /* Passt das Bild ein, ohne dass es verzerrt wird */
+            display: block;
+            margin: 0 auto;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .slide-caption {
+            margin-top: 8px;
+            font-size: 0.95rem;
+            color: var(--bayern-gold);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .slide-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(134, 0, 26, 0.8);
+            color: white;
+            border: 1px solid var(--bayern-red);
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 4px;
+            transition: background 0.2s;
+            z-index: 10;
+        }
+        .slide-btn:hover { background: var(--bayern-red); }
+        .slide-prev { left: 10px; }
+        .slide-next { right: 10px; }
 
         .title-row {
             display: flex;
@@ -208,7 +250,6 @@
             max-height: 70vh;
         }
 
-        /* Farb-Klassen für den FC Bayern Namen im Pop-up */
         .bayern-badge-win {
             background: rgba(46, 160, 67, 0.25);
             color: #3fb950;
@@ -471,8 +512,14 @@
 <body>
 
 <div class="container">
+    <!-- GEMEINSAME SLIDESHOW OBEN (FESTes FORMAT) -->
     <div class="banner-wrapper">
-        <img src="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Teamfoto_bayern.png" alt="FC Bayern Banner" class="app-banner">
+        <div class="slideshow-container">
+            <button class="slide-btn slide-prev" onclick="prevSlide()">❮</button>
+            <img id="slideImage" src="" alt="Mannschaftsfoto / Kader" class="slide-img">
+            <button class="slide-btn slide-next" onclick="nextSlide()">❯</button>
+        </div>
+        <div class="slide-caption" id="slideCaption">Mannschaftsfoto</div>
     </div>
 
     <div class="title-row">
@@ -511,7 +558,10 @@
     <div class="section-box">
         <div class="section-header">
             <span>FC Bayern München — Saison-Auswertung</span>
-            <button class="btn-modal-open" onclick="openBayernMatchesModal()">📅 Alle Spiele FC Bayern</button>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-modal-open" onclick="openStaffModal()" style="background: #3fb950; color: #fff;">🩺 Funktionsteam</button>
+                <button class="btn-modal-open" onclick="openBayernMatchesModal()">📅 Alle Spiele</button>
+            </div>
         </div>
         <div class="stats-grid" id="bayernStatsGrid"></div>
         <div style="margin-top: 15px;">
@@ -594,6 +644,55 @@
 
     <div class="admin-toggle-wrapper">
         <button class="admin-toggle-btn" onclick="toggleAdminMode()">⚙️ Admin-Zugang</button>
+    </div>
+</div>
+
+<!-- POPUP MODAL: FUNKTIONSTEAM & STAB -->
+<div class="modal-overlay" id="staffModal">
+    <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            <div style="font-weight: bold; font-size: 1.1rem; color: #ffffff;">🩺 Funktionsteam & Betreuerstab</div>
+            <button class="btn-danger" onclick="closeStaffModal()">✕</button>
+        </div>
+        <div class="modal-body" style="font-size: 0.9rem; line-height: 1.6;">
+            
+            <div style="margin-bottom: 15px; background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🏥 Ärzte-Team</div>
+                <div style="color: var(--text-color);">Prof. Dr. Peter Ueblacker, Dr. Jochen Hahne, Prof. Dr. Roland Schmidt <span style="color: var(--text-muted); font-size: 0.8rem;">(Internist, Kardiologe)</span></div>
+            </div>
+
+            <div style="margin-bottom: 15px; background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">💪 Athletik- und Rehatrainer</div>
+                <div style="color: var(--text-color);">Benjamin Sommer, Simon Martinello, Markus Murrer, Quirin Löppert, Soner Mansuroglu <span style="color: var(--text-muted); font-size: 0.8rem;">(Datenanalyst)</span></div>
+            </div>
+
+            <div style="margin-bottom: 15px; background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🏃‍♂️ Physiotherapeuten</div>
+                <div style="color: var(--text-color);">Helmut Erhard <span style="color: var(--text-muted); font-size: 0.8rem;">(Leiter)</span>, Gerry Hoffmann <span style="color: var(--text-muted); font-size: 0.8rem;">(stellv. Leiter)</span>, Christian Huhn, Stephan Weickert, Florian Brandner, Knut Stamer</div>
+            </div>
+
+            <div style="margin-bottom: 15px; background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">📊 Spiel-Analysten</div>
+                <div style="color: var(--text-color);">Michael Niemeyer <span style="color: var(--text-muted); font-size: 0.8rem;">(Leiter)</span>, Michael Cuper, Maximilian Schwab, Giacomo Stey, Patrick Lieb</div>
+            </div>
+
+            <div style="margin-bottom: 15px; background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">📋 Teammanagement</div>
+                <div style="color: var(--text-color);">Maciej Jagiellowicz, Samuel Geiler, Rodyse Munienge</div>
+            </div>
+
+            <div style="margin-bottom: 15px; background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🎽 Zeugwarte</div>
+                <div style="color: var(--text-color);">Martin Dellemann, Lawrence Aimable, Sebastian Pflügler, Haris Harbas</div>
+            </div>
+
+            <div style="background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🚌 Busfahrer</div>
+                <div style="color: var(--text-color);">Michael Lauerbach, Armin Kriz</div>
+            </div>
+
+        </div>
+        <button class="btn" style="margin-top: 15px;" onclick="closeStaffModal()">Schließen</button>
     </div>
 </div>
 
@@ -716,6 +815,51 @@
 
     const ADMIN_PIN = "1919";
     let isAdmin = false;
+
+    // GEMEINSAME SLIDESHOW (TEAMFOTO + POSITIONEN)
+    const slides = [
+        { url: "https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Teamfoto_bayern.png", name: "Mannschaftsfoto" },
+        { url: "https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Torhueter.png", name: "Torhüter" },
+        { url: "https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Abwehr.png", name: "Abwehr" },
+        { url: "https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Mittelfeld.png", name: "Mittelfeld" },
+        { url: "https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Angriff.png", name: "Angriff" },
+        { url: "https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Trainerteam.png", name: "Trainerstab" }
+    ];
+    let currentSlideIndex = 0;
+    let slideInterval;
+
+    function showSlide(index) {
+        if (index >= slides.length) currentSlideIndex = 0;
+        else if (index < 0) currentSlideIndex = slides.length - 1;
+        else currentSlideIndex = index;
+
+        let imgElem = document.getElementById('slideImage');
+        let captionElem = document.getElementById('slideCaption');
+
+        imgElem.style.opacity = 0;
+        setTimeout(() => {
+            imgElem.src = slides[currentSlideIndex].url;
+            captionElem.textContent = slides[currentSlideIndex].name;
+            imgElem.style.opacity = 1;
+        }, 200);
+    }
+
+    function nextSlide() {
+        showSlide(currentSlideIndex + 1);
+        resetTimer();
+    }
+
+    function prevSlide() {
+        showSlide(currentSlideIndex - 1);
+        resetTimer();
+    }
+
+    function resetTimer() {
+        clearInterval(slideInterval);
+        slideInterval = setInterval(() => {
+            showSlide(currentSlideIndex + 1);
+        }, 5000); // Wechsel alle 5 Sekunden
+    }
 
     let currentTipper = localStorage.getItem('bundesliga_tipper') || 'Langen';
     document.getElementById('tipperSelect').value = currentTipper;
@@ -1128,7 +1272,6 @@
         }
     };
 
-    // Spieltag sofort beim Start auslesen und setzen
     function getStoredMatchday() {
         let savedDay = localStorage.getItem('bundesliga_current_matchday');
         if (savedDay) {
@@ -1226,7 +1369,6 @@
             if (showAlert) alert("Fehler beim Aktualisieren der Daten.");
         }
         
-        // Spieltag absichern (bleibt auf dem gespeicherten Wert)
         leagueData.currentMatchday = getStoredMatchday();
         renderAll();
     }
@@ -1479,7 +1621,14 @@
         document.getElementById('leaderboardModal').style.display = 'none';
     }
 
-    // MODAL: ALLE SPIELE FC BAYERN
+    function openStaffModal() {
+        document.getElementById('staffModal').style.display = 'flex';
+    }
+
+    function closeStaffModal() {
+        document.getElementById('staffModal').style.display = 'none';
+    }
+
     function openBayernMatchesModal() {
         let modalBody = document.getElementById('bayernMatchesModalBody');
         modalBody.innerHTML = '';
@@ -1749,15 +1898,16 @@
         }
     }
 
-    // Schließen des Modals bei Klick außerhalb
     window.onclick = function(e) {
         let modal = document.getElementById('bayernMatchesModal');
-        if (e.target === modal) {
-            closeBayernMatchesModal();
-        }
+        let staffModal = document.getElementById('staffModal');
+        if (e.target === modal) closeBayernMatchesModal();
+        if (e.target === staffModal) closeStaffModal();
     }
 
-    // Init beim Start
+    // Beim Starten laden & Slideshow starten
+    showSlide(0);
+    resetTimer();
     loadFromCloud();
 </script>
 
