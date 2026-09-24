@@ -456,13 +456,13 @@
         }
         .form-grid {
             display: grid;
-            grid-template-columns: 2fr 2fr repeat(2, 1fr);
+            grid-template-columns: 80px 80px 140px 1fr;
             gap: 8px;
             align-items: end;
         }
         @media (max-width: 900px) {
             .form-grid { grid-template-columns: 1fr 1fr; }
-            .form-grid .form-group-team { grid-column: span 2; }
+            .form-grid .form-group-full { grid-column: span 2; }
         }
         .form-group label {
             display: block;
@@ -688,12 +688,19 @@
     </div>
 </div>
 
-<!-- POPUP MODAL: GESAMTE BUNDESLIGA TORSCHÜTZENLISTE -->
+<!-- POPUP MODAL: GESAMTE BUNDESLIGA TORSCHÜTZENLISTE MIT VEREINS-MENÜ -->
 <div class="modal-overlay" id="leagueScorersModal">
     <div class="modal-card" style="max-width: 550px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
             <div style="font-weight: bold; font-size: 1.1rem; color: #ffffff;">⚽ Torschützenliste — 1. Bundesliga</div>
             <button class="btn-danger" onclick="closeLeagueScorersModal()">✕</button>
+        </div>
+        <!-- NEUES VEREINS-AUSWAHLMENÜ IM TORSCHÜTZEN-MODAL -->
+        <div style="margin-bottom: 12px;">
+            <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 3px; text-transform: uppercase;">Nach Verein filtern</label>
+            <select id="scorerTeamFilter" class="form-control" onchange="renderLeagueScorersModalList()">
+                <option value="">Alle Vereine anzeigen</option>
+            </select>
         </div>
         <div class="modal-body">
             <div class="table-container">
@@ -1568,7 +1575,7 @@
         let resDiff = resH - resA;
         if (tipDiff === resDiff) return 2;
 
-        let tipTendency = tipH > tipA ? 'home' : (tipH < tipA ? 'away' : 'draw');
+        let tipTendency = tipH > tipA ? 'home' : (tipH < tipA ? 'draw' : 'away');
         let resTendency = resH > resA ? 'home' : (resH === resA ? 'draw' : 'away');
         if (tipTendency === resTendency) return 1;
 
@@ -1635,7 +1642,25 @@
     }
 
     function openLeagueScorersModal() {
+        // Dropdown-Auswahl mit allen Bundesliga-Teams füllen
+        let filterSelect = document.getElementById('scorerTeamFilter');
+        let currentSelected = filterSelect.value;
+        filterSelect.innerHTML = `<option value="">Alle Vereine anzeigen</option>`;
+        leagueData.teams.forEach(team => {
+            let opt = document.createElement('option');
+            opt.value = team;
+            opt.textContent = team;
+            filterSelect.appendChild(opt);
+        });
+        filterSelect.value = currentSelected;
+
+        renderLeagueScorersModalList();
+        document.getElementById('leagueScorersModal').style.display = 'flex';
+    }
+
+    function renderLeagueScorersModalList() {
         let globalScorerMap = {};
+        let selectedTeamFilter = document.getElementById('scorerTeamFilter').value;
 
         Object.values(leagueData.matches).forEach(matchList => {
             if (!Array.isArray(matchList)) return;
@@ -1688,6 +1713,11 @@
                                     if (matchTeamObj) assignedTeam = matchTeamObj;
                                 }
 
+                                // Nach ausgewähltem Verein filtern falls gesetzt
+                                if (selectedTeamFilter && assignedTeam.toLowerCase() !== selectedTeamFilter.toLowerCase()) {
+                                    return;
+                                }
+
                                 if (!globalScorerMap[name]) {
                                     globalScorerMap[name] = { goals: 0, team: assignedTeam };
                                 }
@@ -1704,7 +1734,7 @@
         tbody.innerHTML = '';
 
         if (sortedScorers.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Noch keine Torschützen eingetragen.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Keine Torschützen für diesen Filter gefunden.</td></tr>`;
         } else {
             sortedScorers.forEach(([player, data], idx) => {
                 let tr = document.createElement('tr');
@@ -1718,8 +1748,6 @@
                 tbody.appendChild(tr);
             });
         }
-
-        document.getElementById('leagueScorersModal').style.display = 'flex';
     }
 
     function closeLeagueScorersModal() {
@@ -1989,6 +2017,28 @@
         }
     }
 
+    function insertTeamPrefix(idx, homeTeam, awayTeam) {
+        let select = document.getElementById(`teamSelect_${idx}`);
+        let input = document.getElementById(`bs_${idx}`);
+        let selectedTeam = select.value;
+        if (!selectedTeam) return;
+
+        let prefix = selectedTeam.replace(/^(1\. fsv|1\. fc|sv|sc|tsg|rb|vfb|borussia)\s+/i, "").split(' ')[0];
+        if (selectedTeam.includes('Mainz')) prefix = "Mainz";
+        if (selectedTeam.includes('Bayern')) prefix = "Bayern";
+        if (selectedTeam.includes('Dortmund')) prefix = "Dortmund";
+        if (selectedTeam.includes('Leverkusen')) prefix = "Leverkusen";
+
+        let currentVal = input.value.trim();
+        if (currentVal === "") {
+            input.value = prefix + ":";
+        } else {
+            input.value = currentVal + " - " + prefix + ":";
+        }
+        input.focus();
+        select.value = "";
+    }
+
     function renderInputForm() {
         let container = document.getElementById('matchInputsContainer');
         container.innerHTML = '';
@@ -2002,7 +2052,15 @@
                 <div class="form-grid">
                     <div class="form-group"><label>Tore Heim</label><input type="number" id="hs_${idx}" class="form-control" value="${m.homeScore !== undefined && m.homeScore !== null ? m.homeScore : ''}" min="0"></div>
                     <div class="form-group"><label>Tore Gast</label><input type="number" id="as_${idx}" class="form-control" value="${m.awayScore !== undefined && m.awayScore !== null ? m.awayScore : ''}" min="0"></div>
-                    <div class="form-group" style="grid-column: span 2;"><label>Torschützen</label><input type="text" id="bs_${idx}" class="form-control" value="${m.bayernScorers || ''}"></div>
+                    <div class="form-group">
+                        <label>Verein wählen</label>
+                        <select id="teamSelect_${idx}" class="form-control" onchange="insertTeamPrefix(${idx}, '${m.home.replace(/'/g, "\\'")}', '${m.away.replace(/'/g, "\\'")}')">
+                            <option value="">-- Verein --</option>
+                            <option value="${m.home}">${m.home} (Heim)</option>
+                            <option value="${m.away}">${m.away} (Gast)</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-group-full"><label>Torschützen</label><input type="text" id="bs_${idx}" class="form-control" value="${m.bayernScorers || ''}" placeholder="z.B. Mainz:Becker, Mwene"></div>
                 </div>
             `;
             container.appendChild(card);
