@@ -158,6 +158,80 @@
             margin-bottom: 15px;
             letter-spacing: 0.5px;
             box-shadow: 0 2px 8px rgba(220, 5, 45, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn-modal-open {
+            background: var(--bayern-gold);
+            color: #0b0f19;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: background 0.2s;
+        }
+        .btn-modal-open:hover { background: #ffdb4d; }
+
+        /* MODAL / POPUP STILE */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+        .modal-card {
+            background: #131b2e;
+            border: 1px solid var(--bayern-red);
+            border-radius: 12px;
+            padding: 20px;
+            width: 100%;
+            max-width: 650px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .modal-body {
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+
+        /* Farb-Klassen für den FC Bayern Namen im Pop-up */
+        .bayern-badge-win {
+            background: rgba(46, 160, 67, 0.25);
+            color: #3fb950;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(46, 160, 67, 0.4);
+            font-weight: bold;
+        }
+        .bayern-badge-draw {
+            background: rgba(227, 179, 64, 0.25);
+            color: #e3b341;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(227, 179, 64, 0.4);
+            font-weight: bold;
+        }
+        .bayern-badge-loss {
+            background: rgba(248, 81, 73, 0.25);
+            color: #f85149;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            font-weight: bold;
         }
 
         .matchday-controls {
@@ -306,27 +380,6 @@
             gap: 3px;
         }
 
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 15px;
-        }
-        .modal-card {
-            background: #131b2e;
-            border: 1px solid var(--bayern-red);
-            border-radius: 12px;
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
         .admin-toggle-wrapper {
             text-align: right;
             margin-top: 15px;
@@ -456,7 +509,10 @@
 
     <!-- BAYERN AUSWERTUNG & TORSCHÜTZEN -->
     <div class="section-box">
-        <div class="section-header">FC Bayern München — Saison-Auswertung</div>
+        <div class="section-header">
+            <span>FC Bayern München — Saison-Auswertung</span>
+            <button class="btn-modal-open" onclick="openBayernMatchesModal()">📅 Alle Spiele FC Bayern</button>
+        </div>
         <div class="stats-grid" id="bayernStatsGrid"></div>
         <div style="margin-top: 15px;">
             <div style="font-size: 0.8rem; font-weight: bold; color: var(--bayern-bright-red); text-transform: uppercase; margin-bottom: 8px;">Interne Torschützenliste</div>
@@ -538,6 +594,33 @@
 
     <div class="admin-toggle-wrapper">
         <button class="admin-toggle-btn" onclick="toggleAdminMode()">⚙️ Admin-Zugang</button>
+    </div>
+</div>
+
+<!-- POPUP MODAL: ALLE SPIELE FC BAYERN -->
+<div class="modal-overlay" id="bayernMatchesModal">
+    <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            <div style="font-weight: bold; font-size: 1.1rem; color: #ffffff;">📅 FC Bayern München — Alle Saisonspiele</div>
+            <button class="btn-danger" onclick="closeBayernMatchesModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50px; text-align: center;">ST</th>
+                            <th style="width: 90px;">Termin</th>
+                            <th style="text-align: right;">Heim</th>
+                            <th style="text-align: center; width: 70px;">Erg.</th>
+                            <th>Gast</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bayernMatchesModalBody"></tbody>
+                </table>
+            </div>
+        </div>
+        <button class="btn" style="margin-top: 15px;" onclick="closeBayernMatchesModal()">Schließen</button>
     </div>
 </div>
 
@@ -1045,11 +1128,18 @@
         }
     };
 
-    function initMatchday() {
+    // Spieltag sofort beim Start auslesen und setzen
+    function getStoredMatchday() {
         let savedDay = localStorage.getItem('bundesliga_current_matchday');
-        if (savedDay) leagueData.currentMatchday = parseInt(savedDay);
+        if (savedDay) {
+            let parsed = parseInt(savedDay);
+            if (!isNaN(parsed) && parsed >= 1 && parsed <= 34) {
+                return parsed;
+            }
+        }
+        return 1;
     }
-    initMatchday();
+    leagueData.currentMatchday = getStoredMatchday();
 
     function toggleAdminMode() {
         const adminCard = document.getElementById('adminCard');
@@ -1135,6 +1225,9 @@
             console.log('Ladehinweis:', e);
             if (showAlert) alert("Fehler beim Aktualisieren der Daten.");
         }
+        
+        // Spieltag absichern (bleibt auf dem gespeicherten Wert)
+        leagueData.currentMatchday = getStoredMatchday();
         renderAll();
     }
 
@@ -1386,6 +1479,69 @@
         document.getElementById('leaderboardModal').style.display = 'none';
     }
 
+    // MODAL: ALLE SPIELE FC BAYERN
+    function openBayernMatchesModal() {
+        let modalBody = document.getElementById('bayernMatchesModalBody');
+        modalBody.innerHTML = '';
+
+        let bayernMatches = [];
+        for (let mDay in leagueData.matches) {
+            leagueData.matches[mDay].forEach(m => {
+                if (m.home === "FC Bayern München" || m.away === "FC Bayern München") {
+                    bayernMatches.push({ matchday: parseInt(mDay), ...m });
+                }
+            });
+        }
+        bayernMatches.sort((a, b) => a.matchday - b.matchday);
+
+        if (bayernMatches.length === 0) {
+            modalBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Keine Spiele gefunden.</td></tr>`;
+        } else {
+            bayernMatches.forEach(m => {
+                let hasResult = m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null;
+                let isHome = m.home === "FC Bayern München";
+                
+                let badgeClass = '';
+                if (hasResult) {
+                    let bayernGoals = isHome ? m.homeScore : m.awayScore;
+                    let oppGoals = isHome ? m.awayScore : m.homeScore;
+
+                    if (bayernGoals > oppGoals) badgeClass = 'bayern-badge-win';
+                    else if (bayernGoals === oppGoals) badgeClass = 'bayern-badge-draw';
+                    else badgeClass = 'bayern-badge-loss';
+                }
+
+                let homeDisplay = m.home;
+                let awayDisplay = m.away;
+
+                if (isHome) {
+                    homeDisplay = `<span class="${badgeClass}">${m.home}</span>`;
+                } else {
+                    awayDisplay = `<span class="${badgeClass}">${m.away}</span>`;
+                }
+
+                let resultDisplay = hasResult ? `<strong>${m.homeScore}:${m.awayScore}</strong>` : `<span style="color:var(--text-muted);">-:-</span>`;
+                let formattedDate = m.date ? m.date.split('-').reverse().join('.') : 'Offen';
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="text-align: center; color: var(--bayern-bright-red); font-weight: bold;">ST ${m.matchday}</td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">${formattedDate}</td>
+                    <td style="text-align: right;">${homeDisplay}</td>
+                    <td style="text-align: center;">${resultDisplay}</td>
+                    <td>${awayDisplay}</td>
+                `;
+                modalBody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('bayernMatchesModal').style.display = 'flex';
+    }
+
+    function closeBayernMatchesModal() {
+        document.getElementById('bayernMatchesModal').style.display = 'none';
+    }
+
     function renderMatchdayTable() {
         let tbody = document.getElementById('matchdayTableBody');
         tbody.innerHTML = '';
@@ -1590,6 +1746,14 @@
             delete existingMatches[idx].homeScore; delete existingMatches[idx].awayScore; delete existingMatches[idx].bayernScorers; delete existingMatches[idx].scorers;
             await saveToCloud();
             renderAll();
+        }
+    }
+
+    // Schließen des Modals bei Klick außerhalb
+    window.onclick = function(e) {
+        let modal = document.getElementById('bayernMatchesModal');
+        if (e.target === modal) {
+            closeBayernMatchesModal();
         }
     }
 
