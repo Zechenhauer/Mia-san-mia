@@ -335,6 +335,7 @@
             padding: 10px 8px;
             border-bottom: 1px solid var(--border-color);
             white-space: nowrap;
+            vertical-align: top;
         }
         tr:hover { background-color: rgba(220, 5, 45, 0.03); }
 
@@ -359,7 +360,6 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 10px;
-            margin-bottom: 15px;
         }
         .stat-card {
             background: #1b1622;
@@ -378,21 +378,6 @@
             font-size: 0.7rem;
             color: var(--text-muted);
             text-transform: uppercase;
-        }
-
-        .scorer-row-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .player-mini-avatar {
-            width: 48px;
-            height: 34px;
-            border-radius: 5px;
-            object-fit: contain;
-            background: #21262d;
-            border: 1px solid var(--bayern-red);
-            flex-shrink: 0;
         }
 
         .team-cell-content {
@@ -552,7 +537,7 @@
         </div>
     </div>
 
-    <!-- BAYERN AUSWERTUNG & TORSCHÜTZEN -->
+    <!-- BAYERN AUSWERTUNG -->
     <div class="section-box">
         <div class="section-header">
             <span>FC Bayern München — Saison-Auswertung</span>
@@ -563,20 +548,6 @@
             </div>
         </div>
         <div class="stats-grid" id="bayernStatsGrid"></div>
-        <div style="margin-top: 15px;">
-            <div style="font-size: 0.8rem; font-weight: bold; color: var(--bayern-bright-red); text-transform: uppercase; margin-bottom: 8px;">Interne Torschützenliste</div>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Spieler</th>
-                            <th style="text-align: center; width: 100px;">Tore</th>
-                        </tr>
-                    </thead>
-                    <tbody id="bayernScorersBody"></tbody>
-                </table>
-            </div>
-        </div>
     </div>
 
     <!-- SPIELTAGS-TABELLE -->
@@ -1012,6 +983,22 @@
                     let dateStr = match.matchDateTime ? match.matchDateTime.split('T')[0] : "";
                     let timeStr = !isNaN(matchDateObj.getTime()) ? matchDateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : "15:30";
 
+                    // API Torschützen auslesen
+                    let apiScorers = [];
+                    if (match.goals && Array.isArray(match.goals)) {
+                        match.goals.forEach(goal => {
+                            let name = goal.goalGetterName;
+                            if (name) {
+                                let min = (goal.matchMinute !== null && goal.matchMinute !== undefined) ? goal.matchMinute + "'" : "";
+                                let hPts = (goal.scoreTeam1 !== null && goal.scoreTeam1 !== undefined) ? goal.scoreTeam1 : goal.scoreGoal1;
+                                let aPts = (goal.scoreTeam2 !== null && goal.scoreTeam2 !== undefined) ? goal.scoreTeam2 : goal.scoreGoal2;
+                                let scoreStr = (hPts !== undefined && aPts !== undefined) ? ` (${hPts}:${aPts})` : "";
+                                let minStr = min ? ` (${min})` : "";
+                                apiScorers.push(`⚽ ${name}${minStr}${scoreStr}`);
+                            }
+                        });
+                    }
+
                     openLigaMatches[mDay].push({
                         match_id: matchId,
                         home: homeTeam,
@@ -1021,7 +1008,8 @@
                         homeScore: homeScore,
                         awayScore: awayScore,
                         isFinished: match.matchIsFinished,
-                        bayernScorers: bayernCloudScorers[matchId] || ""
+                        bayernScorers: bayernCloudScorers[matchId] || "",
+                        apiGoals: apiScorers
                     });
                 });
             }
@@ -1327,9 +1315,12 @@
                 resultDisplay += '<div style="font-size: 0.65rem; color: #e3b341; margin-top: 2px;">(Live)</div>';
             }
 
+            // Torschützen-Anzeige unter dem Ergebnis (Cloud-Bayern-Torschützen oder OpenLigaDB-Torschützen)
             let scorersText = m.bayernScorers || "";
             if (scorersText.trim() !== "") {
-                resultDisplay += '<div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">⚽ ' + scorersText + '</div>';
+                resultDisplay += '<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">⚽ ' + scorersText + '</div>';
+            } else if (m.apiGoals && m.apiGoals.length > 0) {
+                resultDisplay += '<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">' + m.apiGoals.join('<br>') + '</div>';
             }
 
             let matchTips = allTips.filter(t => t.match_id === matchId);
@@ -1424,7 +1415,6 @@
 
     function renderBayernStats() {
         let played = 0, won = 0, draw = 0, lost = 0, goalsFor = 0, goalsAgainst = 0, points = 0;
-        let scorerMap = {};
         
         Object.values(openLigaMatches).forEach(matchList => {
             if (!Array.isArray(matchList)) return;
@@ -1436,18 +1426,6 @@
                     let myG = isHome ? m.homeScore : m.awayScore, oppG = isHome ? m.awayScore : m.homeScore;
                     goalsFor += myG; goalsAgainst += oppG;
                     if (myG > oppG) { won++; points += 3; } else if (myG === oppG) { draw++; points += 1; } else { lost++; }
-                    
-                    let scText = m.bayernScorers;
-                    if (scText && scText.trim() !== "") {
-                        scText.split(',').forEach(p => {
-                            p = p.trim();
-                            if (!p) return;
-                            let matchNum = p.match(/\((\d+)\)/);
-                            let count = matchNum ? parseInt(matchNum[1]) : 1;
-                            let name = p.replace(/\s*\(\d+\)/, '').trim();
-                            if (name) scorerMap[name] = (scorerMap[name] || 0) + count;
-                        });
-                    }
                 }
             });
         });
@@ -1460,43 +1438,6 @@
             <div class="stat-card"><div class="stat-label">Tore</div><div class="stat-value">${goalsFor}:${goalsAgainst}</div></div>
             <div class="stat-card"><div class="stat-label">Punkte</div><div class="stat-value">${points}</div></div>
         `;
-
-        let scorersBody = document.getElementById('bayernScorersBody');
-        scorersBody.innerHTML = '';
-        let sortedScorers = Object.entries(scorerMap).sort((a, b) => b[1] - a[1]);
-        
-        if (sortedScorers.length === 0) {
-            scorersBody.innerHTML = `<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 10px;">Noch keine Torschützen eingetragen.</td></tr>`;
-        } else {
-            sortedScorers.forEach(([player, goals]) => {
-                let cleanPlayerName = player.trim().toLowerCase()
-                    .replace(/[áàäâãå]/g, 'a').replace(/[éèëê]/g, 'e').replace(/[íìïî]/g, 'i').replace(/[óòöôõ]/g, 'o').replace(/[úùüû]/g, 'u');
-            
-                let photoUrl = null;
-                for (let key in playerPhotos) {
-                    let cleanKey = key.trim().toLowerCase()
-                        .replace(/[áàäâãå]/g, 'a').replace(/[éèëê]/g, 'e').replace(/[íìïî]/g, 'i').replace(/[óòöôõ]/g, 'o').replace(/[úùüû]/g, 'u');
-                    if (cleanKey === cleanPlayerName || cleanKey.includes(cleanPlayerName) || cleanPlayerName.includes(cleanKey)) {
-                        photoUrl = playerPhotos[key];
-                        break;
-                    }
-                }
-                
-                let avatarHtml = photoUrl 
-                    ? '<img src="' + photoUrl + '" alt="' + player + '" class="player-mini-avatar">' 
-                    : '<div class="player-mini-avatar" style="display:flex; align-items:center; justify-content:center; font-size:0.6rem; color:var(--text-muted);">⚽</div>';
-
-                scorersBody.innerHTML += `
-                    <td>
-                        <div class="scorer-row-content">
-                            ${avatarHtml}
-                            <span>${player}</span>
-                        </div>
-                    </td>
-                    <td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${goals}</td>
-                `;
-            });
-        }
     }
 
     function renderInputForm() {
