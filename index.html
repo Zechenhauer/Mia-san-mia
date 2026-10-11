@@ -160,6 +160,7 @@
             justify-content: center;
             gap: 15px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .supabase-badge {
@@ -169,6 +170,31 @@
             border-radius: 4px;
             border: 1px solid rgba(46, 160, 67, 0.3);
             font-weight: 600;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        .live-badge {
+            display: none;
+            color: #ff7b72;
+            background: rgba(248, 81, 73, 0.15);
+            padding: 3px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(248, 81, 73, 0.4);
+            font-weight: bold;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #f85149;
+            border-radius: 50%;
+            animation: pulse-red 1.2s infinite;
         }
 
         .section-box {
@@ -198,6 +224,26 @@
             flex-wrap: wrap;
             gap: 10px;
         }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .header-action-btn {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .header-action-btn:hover { background: rgba(0, 0, 0, 0.4); }
 
         .btn-modal-open {
             background: var(--bayern-gold);
@@ -488,6 +534,7 @@
     <div class="meta-info">
         <span>⚡ Web-App & Management: Jürgen Schützendorf</span>
         <span class="supabase-badge" id="cloudStatusBadge">● Cloud-DB & Live-Sync aktiv</span>
+        <div class="live-badge" id="liveIndicatorBadge"><span class="live-dot"></span> LIVE-SPIELE LÄUFT</div>
     </div>
 
     <!-- BAYERN AUSWERTUNG -->
@@ -505,7 +552,12 @@
 
     <!-- SPIELTAGS-TABELLE -->
     <div class="section-box">
-        <div class="section-header" id="matchdayTableHeader">Spieltag 1 — Spiele & Ergebnisse</div>
+        <div class="section-header">
+            <span id="matchdayTableHeader">Spieltag 1 — Spiele & Ergebnisse</span>
+            <div class="header-actions">
+                <button class="header-action-btn" onclick="requestPushPermission()">🔔 Push-Alarm</button>
+            </div>
+        </div>
         <div class="matchday-controls">
             <button class="matchday-btn" onclick="changeMatchday(-1)">◀ Vorheriger Spieltag</button>
             <strong id="matchdayDisplay" style="color: var(--bayern-bright-red); font-size: 1.1rem;">Spieltag 1</strong>
@@ -530,7 +582,12 @@
 
     <!-- GESAMT-TABELLE -->
     <div class="section-box">
-        <div class="section-header">Bundesliga-Tabelle (Gesamt)</div>
+        <div class="section-header">
+            <span>Bundesliga-Tabelle (Gesamt)</span>
+            <div class="header-actions">
+                <button class="header-action-btn" onclick="requestPushPermission()">🔔 Push-Alarm</button>
+            </div>
+        </div>
         <div class="table-container">
             <table>
                 <thead>
@@ -565,6 +622,8 @@
         </div>
         <div id="matchInputsContainer"></div>
         <button class="btn" onclick="saveAllScorers()">Bayern-Torschützen speichern</button>
+        <button class="btn" style="background: #238636; margin-top: 10px;" onclick="sendTestPush()">🚀 Test-Push Benachrichtigung senden</button>
+        <button class="btn" style="background: #e3b341; color: #0b0f19; margin-top: 10px;" onclick="simulateLiveGoal()">⚡ Live-Tor simulieren (Test)</button>
     </div>
 
     <div class="admin-toggle-wrapper">
@@ -715,7 +774,119 @@
     let teamLogos = {};
     let openLigaMatches = {};
     let bayernCloudScorers = {};
+    let previousScores = {}; // Speichert die letzten Stände zur automatischen Toraerkennung
     let currentMatchday = parseInt(localStorage.getItem('bundesliga_current_matchday')) || 1;
+
+    // VAPID Public Key Helper für Base64-Konvertierung
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    // Push Benachrichtigungen aktivieren und mit VAPID Key in Supabase speichern
+    async function requestPushPermission() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            alert("Push-Benachrichtigungen werden von diesem Browser leider nicht unterstützt.");
+            return;
+        }
+        
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                alert("Die Berechtigung für Benachrichtigungen wurde verweigert.");
+                return;
+            }
+
+            const registration = await navigator.serviceWorker.register('./sw.js');
+            await registration.ready;
+
+            const publicVapidKey = 'BAsnfWgySLti5LzulXfN-xI-x7UDV32LO98YXgg1qdoRY1E1Tl05QPgCvOMgfwe80cSv_K7336-dhJTgBkHUI70';
+            
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+            });
+
+            const p256dh = subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))) : '';
+            const auth = subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : '';
+
+            const { error } = await supabaseClient.from('push_subscriptions').upsert({
+                endpoint: subscription.endpoint,
+                p256dh: p256dh,
+                auth: auth
+            }, { onConflict: 'endpoint' });
+
+            if (error) {
+                console.error("Supabase Fehlerdetails:", error);
+                alert("Fehler in Supabase: " + error.message);
+            } else {
+                alert("Push-Alarm erfolgreich aktiviert! Dein Gerät ist jetzt registriert.");
+            }
+
+        } catch (error) {
+            console.error('Fehler bei der Push-Registrierung:', error);
+            alert("Fehler beim Aktivieren der Benachrichtigung: " + error.message);
+        }
+    }
+
+    // Test-Push an die Supabase Edge Function senden
+    async function sendTestPush() {
+        try {
+            const response = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    title: "⚽ Test-Tor-Alarm!",
+                    body: "Das Test-Tor wurde erfolgreich über die Edge Function ausgelöst!"
+                })
+            });
+
+            const textResponse = await response.text();
+            
+            if (response.ok) {
+                alert("Test-Push erfolgreich ausgelöst! Gerät(e) sollten benachrichtigt werden.");
+                console.log("Antwort:", textResponse);
+            } else {
+                alert("Fehler von der Edge Function: " + textResponse);
+            }
+        } catch (e) {
+            console.error("Netzwerkfehler:", e);
+            alert("Netzwerkfehler: " + e.message);
+        }
+    }
+
+    // Automatischer Push bei echtem Tor
+    async function triggerAutomaticGoalPush(home, away, hScore, aScore) {
+        try {
+            await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+                method: 'POST',
+                mode: 'cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: `⚽ TOR! (${hScore}:${aScore})`,
+                    body: `${home} vs ${away}`
+                })
+            });
+            console.log(`Automatischer Tor-Alarm ausgelöst für ${home} vs ${away} (${hScore}:${aScore})`);
+        } catch (e) {
+            console.error("Fehler beim automatischen Tor-Push:", e);
+        }
+    }
+
+    // Live-Tor manuell simulieren (Test-Button)
+    async function simulateLiveGoal() {
+        await triggerAutomaticGoalPush("FC Bayern München", "Borussia Dortmund", 1, 0);
+        alert("Simuliertes Live-Tor gesendet! Die Push-Nachricht sollte gleich auf dem Handy erscheinen.");
+    }
 
     function toggleAdminMode() {
         const adminCard = document.getElementById('adminCard');
@@ -775,8 +946,13 @@
             let data = await response.json();
 
             openLigaMatches = {};
+            let hasLiveMatches = false;
+
             if (Array.isArray(data)) {
                 data.forEach(match => {
+                    let isCurrentlyLive = !match.matchIsFinished && match.matchResults && match.matchResults.length > 0;
+                    if (isCurrentlyLive) hasLiveMatches = true;
+
                     let mDay = match.group && match.group.groupOrderID ? match.group.groupOrderID : 1;
                     if (!openLigaMatches[mDay]) openLigaMatches[mDay] = [];
 
@@ -799,6 +975,17 @@
                             homeScore = res.pointsTeam1;
                             awayScore = res.pointsTeam2;
                         }
+                    }
+
+                    // --- AUTOMATISCHE TOR-ERKENNUNG ---
+                    if (homeScore !== null && awayScore !== null) {
+                        let prev = previousScores[matchId];
+                        if (prev !== undefined) {
+                            if (homeScore > prev.home || awayScore > prev.away) {
+                                triggerAutomaticGoalPush(homeTeam, awayTeam, homeScore, awayScore);
+                            }
+                        }
+                        previousScores[matchId] = { home: homeScore, away: awayScore };
                     }
 
                     let matchDateObj = new Date(match.matchDateTime);
@@ -839,6 +1026,12 @@
                     });
                 });
             }
+
+            let liveBadge = document.getElementById('liveIndicatorBadge');
+            if (liveBadge) {
+                liveBadge.style.display = hasLiveMatches ? 'flex' : 'none';
+            }
+
         } catch (e) {
             console.error("Fehler beim Abrufen von OpenLigaDB:", e);
         }
@@ -1195,12 +1388,12 @@
     resetTimer();
     loadFromCloud();
 
-    // Automatischer Live-Refresh im Hintergrund alle 60 Sekunden
+    // Automatischer Live-Refresh im Hintergrund alle 30 Sekunden
     setInterval(() => {
         if (!isAdmin) {
             fetchOpenLigaData();
         }
-    }, 60000);
+    }, 30000);
 </script>
 
 </body>
