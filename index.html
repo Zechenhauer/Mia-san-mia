@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bayern 1.BL</title>
     
-    <!-- PWA / Mobile Icons mit weißem Hintergrund für iOS/Android Kompatibilität -->
-    <link rel="icon" type="image/png" href="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png">
-    <link rel="apple-touch-icon" href="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Abwehr.png"> <!-- Fallback stabiles Logo -->
-    <link rel="apple-touch-icon" sizes="180x180" href="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png">
-    
+    <!-- Perfektes Inline-SVG Icon für den Homescreen (garantiert ohne "G"-Fehler) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23dc052d%22/><text x=%2250%22 y=%2270%22 font-size=%2260%22 text-anchor=%22middle%22>⚽</text></svg>">
+    <link rel="apple-touch-icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23dc052d%22/><text x=%2250%22 y=%2270%22 font-size=%2260%22 text-anchor=%22middle%22>⚽</text></svg>">
+
     <!-- Supabase Client Bibliothek laden -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -896,13 +895,6 @@
                 if (m.apiGoals && Array.isArray(m.apiGoals)) {
                     m.apiGoals.forEach(goalObj => {
                         let namePart = goalObj.name;
-                        
-                        if (m.home.includes("Bayern") || m.away.includes("Bayern")) {
-                            if (m.bayernScorers && m.bayernScorers.toLowerCase().includes(namePart.toLowerCase())) {
-                                // mark as processed
-                            }
-                        }
-
                         let key = namePart.toLowerCase();
                         if (!scorersMap[key]) {
                             scorersMap[key] = { name: namePart, goals: 0 };
