@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FC Bayern München — Bundesliga Spielplan, Tabelle 2026/27</title>
+    <title>Bayern 1.BL</title>
+    
+    <!-- PWA / Mobile Icons mit weißem Hintergrund für iOS/Android Kompatibilität -->
     <link rel="icon" type="image/png" href="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png">
-    <link rel="apple-touch-icon" href="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png">
+    <link rel="apple-touch-icon" href="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Abwehr.png"> <!-- Fallback stabiles Logo -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png">
+    
     <!-- Supabase Client Bibliothek laden -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -892,11 +896,10 @@
                 if (m.apiGoals && Array.isArray(m.apiGoals)) {
                     m.apiGoals.forEach(goalObj => {
                         let namePart = goalObj.name;
-                        let team = goalObj.team;
                         
                         if (m.home.includes("Bayern") || m.away.includes("Bayern")) {
                             if (m.bayernScorers && m.bayernScorers.toLowerCase().includes(namePart.toLowerCase())) {
-                                team = m.home.includes("Bayern") ? m.home : m.away;
+                                // mark as processed
                             }
                         }
 
