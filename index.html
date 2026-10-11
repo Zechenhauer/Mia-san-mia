@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FC Bayern München — Bundesliga Spielplan, Tabelle & Tippspiel 2026/27</title>
+    <title>FC Bayern München — Bundesliga Spielplan, Tabelle 2026/27</title>
     <link rel="icon" type="image/png" href="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png">
     <link rel="apple-touch-icon" href="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png">
     <!-- Supabase Client Bibliothek laden -->
@@ -168,19 +168,6 @@
             font-weight: 600;
         }
 
-        .tippspiel-bar {
-            background: #1b1622;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px 15px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
         .section-box {
             background: #0b0f19;
             border: 1px solid var(--border-color);
@@ -241,7 +228,7 @@
             border-radius: 12px;
             padding: 20px;
             width: 100%;
-            max-width: 650px;
+            max-width: 550px;
             max-height: 85vh;
             display: flex;
             flex-direction: column;
@@ -392,22 +379,6 @@
             flex-shrink: 0;
         }
 
-        .tips-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-            margin-top: 4px;
-        }
-        .tip-badge {
-            font-size: 0.65rem;
-            font-weight: bold;
-            padding: 2px 5px;
-            border-radius: 4px;
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-        }
-
         .admin-toggle-wrapper {
             text-align: right;
             margin-top: 15px;
@@ -510,31 +481,10 @@
         <h2>FC Bayern <span>München</span></h2>
         <img src="https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/Bilder/logo%20fc%20bayern.png" alt="FC Bayern Logo" class="header-logo">
     </div>
-    <div class="subtitle" id="leagueSubtitle">1. Bundesliga — Saison 2026/27 & Tippspiel</div>
+    <div class="subtitle" id="leagueSubtitle">1. Bundesliga — Saison 2026/27</div>
     <div class="meta-info">
         <span>⚡ Web-App & Management: Jürgen Schützendorf</span>
-        <span class="supabase-badge" id="cloudStatusBadge">● Cloud-DB aktiv</span>
-    </div>
-
-    <!-- TIPPSPIEL LEISTE -->
-    <div class="tippspiel-bar">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 1.2rem;">🎯</span>
-            <div>
-                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: bold;">Kollegen-Tippspiel</div>
-                <div style="font-size: 0.85rem; font-weight: bold;" id="activeTipperDisplay">Eingeloggt als: Langen</div>
-            </div>
-        </div>
-        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <select id="tipperSelect" class="form-control" style="width: 145px; font-weight: bold;" onchange="changeTipper(this.value)">
-                <option value="Langen">Langen (Gold)</option>
-                <option value="Kokser">Kokser (Grün)</option>
-                <option value="Flo">Flo (Blau)</option>
-            </select>
-            <button class="matchday-btn" onclick="openPasswordModal()" style="font-size: 0.75rem;">🔑 Passwort ändern</button>
-            <button class="matchday-btn" onclick="loadFromCloud(true)" style="background: #21262d; border-color: var(--border-color);" title="Daten sofort neu laden">🔄 Aktualisieren</button>
-            <button class="matchday-btn" onclick="openLeaderboardModal()" style="background: var(--bayern-red); border-color: var(--bayern-red);">🏆 Gesamtwertung</button>
-        </div>
+        <span class="supabase-badge" id="cloudStatusBadge">● Cloud-DB & Live-Sync aktiv</span>
     </div>
 
     <!-- BAYERN AUSWERTUNG -->
@@ -552,7 +502,7 @@
 
     <!-- SPIELTAGS-TABELLE -->
     <div class="section-box">
-        <div class="section-header" id="matchdayTableHeader">Spieltag 1 — Spiele, Ergebnisse & Tipps</div>
+        <div class="section-header" id="matchdayTableHeader">Spieltag 1 — Spiele & Ergebnisse</div>
         <div class="matchday-controls">
             <button class="matchday-btn" onclick="changeMatchday(-1)">◀ Vorheriger Spieltag</button>
             <strong id="matchdayDisplay" style="color: var(--bayern-bright-red); font-size: 1.1rem;">Spieltag 1</strong>
@@ -566,12 +516,10 @@
                         <th style="text-align: right;">Heimmannschaft</th>
                         <th style="text-align: center; width: 160px;">Ergebnis / Status</th>
                         <th>Gastmannschaft</th>
-                        <th style="width: 110px; text-align: center;">Tipp</th>
-                        <th style="width: 40px; text-align: center;"></th>
                     </tr>
                 </thead>
                 <tbody id="matchdayTableBody">
-                    <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Lade Spielplan von OpenLigaDB...</td></tr>
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Lade Spielplan von OpenLigaDB...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -664,16 +612,10 @@
 
 <!-- POPUP MODAL: TORSCHÜTZEN -->
 <div class="modal-overlay" id="leagueScorersModal">
-    <div class="modal-card" style="max-width: 550px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+    <div class="modal-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
             <div style="font-weight: bold; font-size: 1.1rem; color: #ffffff;">⚽ Torschützenliste — 1. Bundesliga</div>
             <button class="btn-danger" onclick="closeLeagueScorersModal()">✕</button>
-        </div>
-        <div style="margin-bottom: 12px;">
-            <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 3px; text-transform: uppercase;">Nach Verein filtern</label>
-            <select id="scorerTeamFilter" class="form-control" onchange="renderLeagueScorersModalList()">
-                <option value="">Alle Vereine anzeigen</option>
-            </select>
         </div>
         <div class="modal-body">
             <div class="table-container">
@@ -682,12 +624,11 @@
                         <tr>
                             <th style="width: 40px; text-align: center;">Pl.</th>
                             <th>Spieler</th>
-                            <th>Verein</th>
                             <th style="text-align: center; width: 70px;">Tore</th>
                         </tr>
                     </thead>
                     <tbody id="leagueScorersModalBody">
-                        <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Torschützen werden über OpenLigaDB/Admin gepflegt.</td></tr>
+                        <tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Lade Torschützen...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -722,85 +663,6 @@
             </div>
         </div>
         <button class="btn" style="margin-top: 15px;" onclick="closeBayernMatchesModal()">Schließen</button>
-    </div>
-</div>
-
-<!-- MODAL: PASSWORT ABFRAGE -->
-<div class="modal-overlay" id="authModal">
-    <div class="modal-card">
-        <div style="font-weight: bold; font-size: 1rem; color: #ffffff; margin-bottom: 5px;">🔐 Tipp-Schutz</div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">Bitte gib das Passwort für <strong id="authTipperName">Langen</strong> ein:</div>
-        <div style="margin-bottom: 15px;">
-            <input type="password" id="authPasswordInput" class="form-control" placeholder="Dein Passwort..." style="text-align: center; font-size: 1rem;" onkeydown="if(event.key === 'Enter') verifyAndOpenTipModal()">
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn" style="background: #21262d; margin-top: 0;" onclick="closeAuthModal()">Abbrechen</button>
-            <button class="btn" style="margin-top: 0;" onclick="verifyAndOpenTipModal()">Bestätigen</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL: PASSWORT FESTLEGEN / ÄNDERN -->
-<div class="modal-overlay" id="passwordModal">
-    <div class="modal-card">
-        <div style="font-weight: bold; font-size: 1rem; color: #ffffff; margin-bottom: 5px;">🔑 Passwort einrichten</div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">Vergib ein eigenes Passwort für <strong id="pwTipperName">Langen</strong>:</div>
-        <div style="margin-bottom: 15px;">
-            <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Neues Passwort</label>
-            <input type="password" id="newPasswordInput" class="form-control" placeholder="Passwort eingeben..." style="text-align: center; font-size: 1rem;" onkeydown="if(event.key === 'Enter') saveNewPassword()">
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn" style="background: #21262d; margin-top: 0;" onclick="closePasswordModal()">Abbrechen</button>
-            <button class="btn" style="margin-top: 0;" onclick="saveNewPassword()">Passwort speichern</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL: TIPP ABGEBEN -->
-<div class="modal-overlay" id="tipModal">
-    <div class="modal-card">
-        <div style="font-weight: bold; font-size: 1rem; color: #ffffff; margin-bottom: 5px;" id="modalMatchTitle">Tipp abgeben</div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;" id="modalMatchSub">Tippe als: <strong id="modalTipperName">Langen</strong></div>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px;">
-            <div style="text-align: center;">
-                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 4px;" id="modalHomeLabel">Heim</label>
-                <input type="number" id="modalHomeTip" class="form-control" style="width: 70px; text-align: center; font-size: 1.2rem; font-weight: bold;" min="0" value="0">
-            </div>
-            <span style="font-size: 1.2rem; font-weight: bold; margin-top: 15px;">:</span>
-            <div style="text-align: center;">
-                <label style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 4px;" id="modalAwayLabel">Gast</label>
-                <input type="number" id="modalAwayTip" class="form-control" style="width: 70px; text-align: center; font-size: 1.2rem; font-weight: bold;" min="0" value="0">
-            </div>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn" style="background: #21262d; margin-top: 0;" onclick="closeTipModal()">Abbrechen</button>
-            <button class="btn" style="margin-top: 0;" onclick="saveUserTip()">Tipp speichern</button>
-        </div>
-    </div>
-</div>
-
-<!-- MODAL: GESAMTWERTUNG -->
-<div class="modal-overlay" id="leaderboardModal">
-    <div class="modal-card" style="max-width: 450px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-            <div style="font-weight: bold; font-size: 1.1rem; color: #ffffff;">🏆 Tipp-Gesamtwertung</div>
-            <button class="btn-danger" onclick="closeLeaderboardModal()">✕</button>
-        </div>
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Punktesystem: Exaktes Ergebnis = 3 Pkt. | Richtige Tordifferenz = 2 Pkt. | Richtige Tendenz = 1 Pkt.</div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 40px;">Pl.</th>
-                        <th>Mitspieler</th>
-                        <th style="text-align: center;">Richtig</th>
-                        <th style="text-align: center;">Punkte</th>
-                    </tr>
-                </thead>
-                <tbody id="leaderboardTableBody"></tbody>
-            </table>
-        </div>
-        <button class="btn" style="margin-top: 15px;" onclick="closeLeaderboardModal()">Schließen</button>
     </div>
 </div>
 
@@ -847,34 +709,10 @@
         slideInterval = setInterval(() => { showSlide(currentSlideIndex + 1); }, 5000);
     }
 
-    let currentTipper = localStorage.getItem('bundesliga_tipper') || 'Langen';
-    document.getElementById('tipperSelect').value = currentTipper;
-    document.getElementById('activeTipperDisplay').textContent = "Eingeloggt als: " + currentTipper;
-
-    const playerConfigs = {
-        'Langen': { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.2)', border: '#f59e0b' },
-        'Kokser': { color: '#10b981', bg: 'rgba(16, 185, 129, 0.2)', border: '#10b981' },
-        'Flo': { color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.2)', border: '#38bdf8' }
-    };
-
-    let playerPasswords = {};
-    let allTips = [];
-    let playerPhotos = {};
     let teamLogos = {};
     let openLigaMatches = {};
     let bayernCloudScorers = {};
     let currentMatchday = parseInt(localStorage.getItem('bundesliga_current_matchday')) || 1;
-
-    let pendingMatchId = null;
-    let pendingHome = '';
-    let pendingAway = '';
-
-    function changeTipper(name) {
-        currentTipper = name;
-        localStorage.setItem('bundesliga_tipper', name);
-        document.getElementById('activeTipperDisplay').textContent = "Eingeloggt als: " + currentTipper;
-        renderMatchdayTable();
-    }
 
     function toggleAdminMode() {
         const adminCard = document.getElementById('adminCard');
@@ -896,11 +734,8 @@
 
     async function loadFromCloud(showAlert = false) {
         try {
-            let [matchesRes, tipsRes, pwRes, photosRes, logosRes] = await Promise.all([
+            let [matchesRes, logosRes] = await Promise.all([
                 supabaseClient.from('bundesliga_spiele').select('*'),
-                supabaseClient.from('bundesliga_tipps').select('*'),
-                supabaseClient.from('bundesliga_passwoerter').select('*'),
-                supabaseClient.from('bundesliga_spieler_fotos').select('*'),
                 supabaseClient.from('bundesliga_vereins_logos').select('*')
             ]);
 
@@ -909,22 +744,6 @@
                 matchesRes.data.forEach(row => {
                     if (row.match_id && row.bayern_scorers) {
                         bayernCloudScorers[row.match_id] = row.bayern_scorers;
-                    }
-                });
-            }
-
-            if (tipsRes.data) allTips = tipsRes.data;
-
-            if (pwRes.data) {
-                playerPasswords = {};
-                pwRes.data.forEach(p => { playerPasswords[p.player_name] = p.password; });
-            }
-
-            if (photosRes.data) {
-                playerPhotos = {};
-                photosRes.data.forEach(item => {
-                    if (item.player_name && item.photo_url) {
-                        playerPhotos[item.player_name.trim().toLowerCase()] = item.photo_url;
                     }
                 });
             }
@@ -983,18 +802,22 @@
                     let dateStr = match.matchDateTime ? match.matchDateTime.split('T')[0] : "";
                     let timeStr = !isNaN(matchDateObj.getTime()) ? matchDateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : "15:30";
 
-                    // API Torschützen auslesen
                     let apiScorers = [];
                     if (match.goals && Array.isArray(match.goals)) {
                         match.goals.forEach(goal => {
                             let name = goal.goalGetterName;
                             if (name) {
                                 let min = (goal.matchMinute !== null && goal.matchMinute !== undefined) ? goal.matchMinute + "'" : "";
+                                let teamNameAssigned = goal.teamID === match.team1.teamID ? homeTeam : awayTeam;
                                 let hPts = (goal.scoreTeam1 !== null && goal.scoreTeam1 !== undefined) ? goal.scoreTeam1 : goal.scoreGoal1;
                                 let aPts = (goal.scoreTeam2 !== null && goal.scoreTeam2 !== undefined) ? goal.scoreTeam2 : goal.scoreGoal2;
                                 let scoreStr = (hPts !== undefined && aPts !== undefined) ? ` (${hPts}:${aPts})` : "";
                                 let minStr = min ? ` (${min})` : "";
-                                apiScorers.push(`⚽ ${name}${minStr}${scoreStr}`);
+                                apiScorers.push({
+                                    name: name,
+                                    team: teamNameAssigned,
+                                    text: `⚽ ${name}${minStr}${scoreStr}`
+                                });
                             }
                         });
                     }
@@ -1029,7 +852,7 @@
     function renderAll() {
         document.getElementById('matchdayDisplay').textContent = "Spieltag " + currentMatchday;
         document.getElementById('adminMatchdayLabel').textContent = "Spieltag " + currentMatchday;
-        document.getElementById('matchdayTableHeader').textContent = "Spieltag " + currentMatchday + " — Spiele, Ergebnisse & Tipps";
+        document.getElementById('matchdayTableHeader').textContent = "Spieltag " + currentMatchday + " — Spiele & Ergebnisse";
         
         renderMatchdayTable();
         renderTable();
@@ -1048,187 +871,84 @@
         }
     }
 
-    function openPasswordModal() {
-        document.getElementById('pwTipperName').textContent = currentTipper;
-        document.getElementById('newPasswordInput').value = '';
-        document.getElementById('passwordModal').style.display = 'flex';
-    }
-
-    function closePasswordModal() { document.getElementById('passwordModal').style.display = 'none'; }
-
-    async function saveNewPassword() {
-        let newPw = document.getElementById('newPasswordInput').value.trim();
-        if (!newPw) { alert("Bitte ein gültiges Passwort eingeben!"); return; }
-
-        let { error } = await supabaseClient.from('bundesliga_passwoerter').upsert({
-            player_name: currentTipper,
-            password: newPw
-        }, { onConflict: 'player_name' });
-
-        if (error) {
-            alert("Fehler beim Speichern des Passworts: " + error.message);
-        } else {
-            playerPasswords[currentTipper] = newPw;
-            sessionStorage.setItem('auth_' + currentTipper, 'true');
-            alert("Passwort für " + currentTipper + " erfolgreich gespeichert & freigeschaltet!");
-            closePasswordModal();
-        }
-    }
-
-    function requestTipAuthentication(matchId, homeTeam, awayTeam) {
-        pendingMatchId = matchId;
-        pendingHome = homeTeam;
-        pendingAway = awayTeam;
-
-        let registeredPw = playerPasswords[currentTipper];
-
-        if (!registeredPw) {
-            let setupNow = confirm("Für \"" + currentTipper + "\" ist noch kein Passwort hinterlegt. Möchtest du jetzt eines einrichten?");
-            if (setupNow) { openPasswordModal(); return; }
-            else { openTipModalDirect(pendingMatchId, pendingHome, pendingAway); return; }
-        }
-
-        if (sessionStorage.getItem('auth_' + currentTipper) === 'true') {
-            openTipModalDirect(pendingMatchId, pendingHome, pendingAway);
-            return;
-        }
-
-        document.getElementById('authTipperName').textContent = currentTipper;
-        document.getElementById('authPasswordInput').value = '';
-        document.getElementById('authModal').style.display = 'flex';
-    }
-
-    function closeAuthModal() {
-        document.getElementById('authModal').style.display = 'none';
-        pendingMatchId = null;
-    }
-
-    function verifyAndOpenTipModal() {
-        let enteredPw = document.getElementById('authPasswordInput').value;
-        let registeredPw = playerPasswords[currentTipper];
-
-        if (enteredPw === registeredPw) {
-            sessionStorage.setItem('auth_' + currentTipper, 'true');
-            closeAuthModal();
-            openTipModalDirect(pendingMatchId, pendingHome, pendingAway);
-        } else {
-            alert("Falsches Passwort!");
-        }
-    }
-
-    function openTipModalDirect(matchId, homeTeam, awayTeam) {
-        activeModalMatchId = matchId;
-        document.getElementById('modalMatchTitle').textContent = homeTeam + " vs " + awayTeam;
-        document.getElementById('modalHomeLabel').textContent = homeTeam;
-        document.getElementById('modalAwayLabel').textContent = awayTeam;
-        document.getElementById('modalTipperName').textContent = currentTipper;
-
-        let existing = allTips.find(t => t.match_id === matchId && t.player_name === currentTipper);
-        document.getElementById('modalHomeTip').value = existing ? existing.home_tip : 0;
-        document.getElementById('modalAwayTip').value = existing ? existing.away_tip : 0;
-
-        document.getElementById('tipModal').style.display = 'flex';
-    }
-
-    let activeModalMatchId = null;
-    function closeTipModal() {
-        document.getElementById('tipModal').style.display = 'none';
-        activeModalMatchId = null;
-    }
-
-    async function saveUserTip() {
-        if (!activeModalMatchId) return;
-        let hTip = parseInt(document.getElementById('modalHomeTip').value);
-        let aTip = parseInt(document.getElementById('modalAwayTip').value);
-
-        if (isNaN(hTip) || isNaN(aTip)) { alert("Bitte gültige Zahlen eingeben!"); return; }
-
-        let payload = {
-            match_id: activeModalMatchId,
-            player_name: currentTipper,
-            home_tip: hTip,
-            away_tip: aTip
-        };
-
-        let { error } = await supabaseClient.from('bundesliga_tipps').upsert(payload, { onConflict: 'match_id,player_name' });
-        if (error) {
-            alert('Fehler beim Speichern des Tipps: ' + error.message);
-        } else {
-            closeTipModal();
-            let { data } = await supabaseClient.from('bundesliga_tipps').select('*');
-            if (data) allTips = data;
-            renderMatchdayTable();
-        }
-    }
-
-    function calculatePoints(tipH, tipA, resH, resA) {
-        if (resH === null || resA === null || resH === undefined || resA === undefined) return 0;
-        if (tipH === resH && tipA === resA) return 3;
-
-        let tipDiff = tipH - tipA;
-        let resDiff = resH - resA;
-        if (tipDiff === resDiff) return 2;
-
-        let tipTendency = tipH > tipA ? 'home' : (tipH < tipA ? 'draw' : 'away');
-        let resTendency = resH > resA ? 'home' : (resH === resA ? 'draw' : 'away');
-        if (tipTendency === resTendency) return 1;
-
-        return 0;
-    }
-
-    function openLeaderboardModal() {
-        let scores = {};
-        ['Langen', 'Kokser', 'Flo'].forEach(p => { scores[p] = { points: 0, exact: 0 }; });
-
-        Object.values(openLigaMatches).forEach(matchList => {
-            if (!Array.isArray(matchList)) return;
-            matchList.forEach(m => {
-                if (!m.match_id) return;
-                let hasRes = m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null;
-                if (!hasRes) return;
-
-                let matchTips = allTips.filter(t => t.match_id === m.match_id);
-                matchTips.forEach(t => {
-                    if (scores[t.player_name]) {
-                        let pts = calculatePoints(t.home_tip, t.away_tip, m.homeScore, m.awayScore);
-                        scores[t.player_name].points += pts;
-                        if (pts === 3) scores[t.player_name].exact++;
-                    }
-                });
-            });
-        });
-
-        let sorted = Object.entries(scores).sort((a, b) => b[1].points - a[1].points);
-        let tbody = document.getElementById('leaderboardTableBody');
-        tbody.innerHTML = '';
-
-        sorted.forEach(([player, data], idx) => {
-            let tr = document.createElement('tr');
-            let rankIcon = idx === 0 ? '👑' : (idx + 1) + '.';
-            if (idx === 0) tr.classList.add('rank-first');
-
-            let cfg = playerConfigs[player] || { color: '#fff' };
-
-            tr.innerHTML = `
-                <td><strong>${rankIcon}</strong></td>
-                <td><span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${cfg.color}; margin-right:5px;"></span>${player}</td>
-                <td style="text-align: center;">${data.exact}x exakt</td>
-                <td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${data.points} Pkt.</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        document.getElementById('leaderboardModal').style.display = 'flex';
-    }
-
-    function closeLeaderboardModal() { document.getElementById('leaderboardModal').style.display = 'none'; }
     function openStaffModal() { document.getElementById('staffModal').style.display = 'flex'; }
     function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
 
     function openLeagueScorersModal() {
+        renderLeagueScorersModalList();
         document.getElementById('leagueScorersModal').style.display = 'flex';
     }
     function closeLeagueScorersModal() { document.getElementById('leagueScorersModal').style.display = 'none'; }
+
+    function renderLeagueScorersModalList() {
+        let tbody = document.getElementById('leagueScorersModalBody');
+        tbody.innerHTML = '';
+
+        let scorersMap = {};
+
+        Object.values(openLigaMatches).forEach(matchList => {
+            if (!Array.isArray(matchList)) return;
+            matchList.forEach(m => {
+                if (m.apiGoals && Array.isArray(m.apiGoals)) {
+                    m.apiGoals.forEach(goalObj => {
+                        let namePart = goalObj.name;
+                        let team = goalObj.team;
+                        
+                        if (m.home.includes("Bayern") || m.away.includes("Bayern")) {
+                            if (m.bayernScorers && m.bayernScorers.toLowerCase().includes(namePart.toLowerCase())) {
+                                team = m.home.includes("Bayern") ? m.home : m.away;
+                            }
+                        }
+
+                        let key = namePart.toLowerCase();
+                        if (!scorersMap[key]) {
+                            scorersMap[key] = { name: namePart, goals: 0 };
+                        }
+                        scorersMap[key].goals++;
+                    });
+                }
+
+                if (m.bayernScorers && typeof m.bayernScorers === 'string') {
+                    let entries = m.bayernScorers.split(',');
+                    entries.forEach(entry => {
+                        let parts = entry.trim().split('(');
+                        let pName = parts[0].trim();
+                        if (pName) {
+                            let count = 1;
+                            if (parts[1]) {
+                                let numMatch = parts[1].match(/\d+/);
+                                if (numMatch) count = parseInt(numMatch[0]);
+                            }
+                            let key = pName.toLowerCase();
+                            if (!scorersMap[key]) {
+                                scorersMap[key] = { name: pName, goals: 0 };
+                            }
+                            scorersMap[key].goals = Math.max(scorersMap[key].goals, count);
+                        }
+                    });
+                }
+            });
+        });
+
+        let scorersArray = Object.values(scorersMap);
+
+        if (scorersArray.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Noch keine Torschützen für die laufende Saison erfasst.</td></tr>`;
+            return;
+        }
+
+        scorersArray.sort((a, b) => b.goals - a.goals);
+
+        scorersArray.forEach((s, idx) => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align: center; font-weight: bold;">${idx + 1}.</td>
+                <td>${s.name}</td>
+                <td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${s.goals}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 
     function openBayernMatchesModal() {
         let modalBody = document.getElementById('bayernMatchesModalBody');
@@ -1296,7 +1016,7 @@
         let existingMatches = openLigaMatches[currentMatchday] || [];
 
         if (existingMatches.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Keine Spiele für Spieltag ' + currentMatchday + ' gefunden.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Keine Spiele für Spieltag ' + currentMatchday + ' gefunden.</td></tr>';
             return;
         }
 
@@ -1306,7 +1026,6 @@
             let timeStr = m.time ? ' ' + m.time + ' Uhr' : '';
             
             let isBayernMatch = (m.home.includes("Bayern") || m.away.includes("Bayern"));
-            let matchId = m.match_id;
 
             let resultDisplay = hasResult ? '<strong>' + m.homeScore + ':' + m.awayScore + '</strong>' : '<span style="color: var(--text-muted); font-style: italic;">vs</span>';
             if (hasResult && m.isFinished) {
@@ -1315,26 +1034,13 @@
                 resultDisplay += '<div style="font-size: 0.65rem; color: #e3b341; margin-top: 2px;">(Live)</div>';
             }
 
-            // Torschützen-Anzeige unter dem Ergebnis (Cloud-Bayern-Torschützen oder OpenLigaDB-Torschützen)
             let scorersText = m.bayernScorers || "";
             if (scorersText.trim() !== "") {
                 resultDisplay += '<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">⚽ ' + scorersText + '</div>';
             } else if (m.apiGoals && m.apiGoals.length > 0) {
-                resultDisplay += '<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">' + m.apiGoals.join('<br>') + '</div>';
+                let apiGoalsTexts = m.apiGoals.map(g => g.text);
+                resultDisplay += '<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">' + apiGoalsTexts.join('<br>') + '</div>';
             }
-
-            let matchTips = allTips.filter(t => t.match_id === matchId);
-            let tipsHtml = '<div class="tips-container">';
-            matchTips.forEach(t => {
-                let cfg = playerConfigs[t.player_name] || { color: '#fff', bg: '#333' };
-                let ptsStr = "";
-                if (hasResult) {
-                    let pts = calculatePoints(t.home_tip, t.away_tip, m.homeScore, m.awayScore);
-                    ptsStr = ' (' + pts + 'p)';
-                }
-                tipsHtml += '<span class="tip-badge" style="background:' + cfg.bg + '; color:' + cfg.color + '; border:1px solid ' + cfg.border + ';">' + t.player_name + ': ' + t.home_tip + ':' + t.away_tip + ptsStr + '</span>';
-            });
-            tipsHtml += '</div>';
 
             let tr = document.createElement('tr');
             if (isBayernMatch) tr.classList.add('bayern-match-row');
@@ -1350,11 +1056,6 @@
                 <td style="text-align: right;">${homeCellContent}</td>
                 <td style="text-align: center;">${resultDisplay}</td>
                 <td>${awayCellContent}</td>
-                <td style="text-align: center;">
-                    <button class="matchday-btn" style="font-size: 0.7rem; padding: 4px 8px;" onclick="requestTipAuthentication('${matchId}', '${m.home.replace(/'/g, "\\'")}', '${m.away.replace(/'/g, "\\'")}')">🎯 Tippen</button>
-                    ${tipsHtml}
-                </td>
-                <td style="text-align: center;"></td>
             `;
             tbody.appendChild(tr);
         });
@@ -1492,13 +1193,19 @@
     window.onclick = function(e) {
         if (e.target === document.getElementById('bayernMatchesModal')) closeBayernMatchesModal();
         if (e.target === document.getElementById('staffModal')) closeStaffModal();
-        if (e.target === document.getElementById('leaderboardModal')) closeLeaderboardModal();
         if (e.target === document.getElementById('leagueScorersModal')) closeLeagueScorersModal();
     }
 
     showSlide(0);
     resetTimer();
     loadFromCloud();
+
+    // Automatischer Live-Refresh im Hintergrund alle 60 Sekunden
+    setInterval(() => {
+        if (!isAdmin) {
+            fetchOpenLigaData();
+        }
+    }, 60000);
 </script>
 
 </body>
