@@ -774,7 +774,7 @@
     let teamLogos = {};
     let openLigaMatches = {};
     let bayernCloudScorers = {};
-    let previousScores = {}; // Speichert die letzten Stände zur automatischen Toraerkennung
+    let previousScores = {}; 
     let currentMatchday = parseInt(localStorage.getItem('bundesliga_current_matchday')) || 1;
 
     // VAPID Public Key Helper für Base64-Konvertierung
@@ -845,8 +845,8 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    title: "⚽ Test-Tor-Alarm!",
-                    body: "Das Test-Tor wurde erfolgreich über die Edge Function ausgelöst!"
+                    title: "🔴⚫ FC Bayern Test-Alarm",
+                    body: "Das Test-Tor für den FC Bayern wurde erfolgreich ausgelöst!"
                 })
             });
 
@@ -854,7 +854,6 @@
             
             if (response.ok) {
                 alert("Test-Push erfolgreich ausgelöst! Gerät(e) sollten benachrichtigt werden.");
-                console.log("Antwort:", textResponse);
             } else {
                 alert("Fehler von der Edge Function: " + textResponse);
             }
@@ -864,28 +863,33 @@
         }
     }
 
-    // Automatischer Push bei echtem Tor
-    async function triggerAutomaticGoalPush(home, away, hScore, aScore) {
+    // Automatischer Push bei echtem Tor inkl. Torschütze und Minute
+    async function triggerAutomaticGoalPush(home, away, hScore, aScore, scorerName = '', minute = '') {
         try {
+            let detail = scorerName ? 'Tor durch ' + scorerName : "Tor!";
+            if (minute) {
+                detail += ' (' + minute + '. Min)';
+            }
+
             await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
                 method: 'POST',
                 mode: 'cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: `⚽ TOR! (${hScore}:${aScore})`,
-                    body: `${home} vs ${away}`
+                    title: `🔴⚫ TOR FÜR MÜNCHEN! (${hScore}:${aScore})`,
+                    body: `${home} vs ${away} — ${detail}`
                 })
             });
-            console.log(`Automatischer Tor-Alarm ausgelöst für ${home} vs ${away} (${hScore}:${aScore})`);
+            console.log(`Tor-Push ausgelöst für ${home} vs ${away} (${hScore}:${aScore})`);
         } catch (e) {
             console.error("Fehler beim automatischen Tor-Push:", e);
         }
     }
 
-    // Live-Tor manuell simulieren (Test-Button)
+    // Live-Tor manuell simulieren (Test-Button mit Torschütze)
     async function simulateLiveGoal() {
-        await triggerAutomaticGoalPush("FC Bayern München", "Borussia Dortmund", 1, 0);
-        alert("Simuliertes Live-Tor gesendet! Die Push-Nachricht sollte gleich auf dem Handy erscheinen.");
+        await triggerAutomaticGoalPush("FC Bayern München", "Borussia Dortmund", 1, 0, "Harry Kane", "14");
+        alert("Simuliertes Live-Tor gesendet!");
     }
 
     function toggleAdminMode() {
@@ -977,12 +981,16 @@
                         }
                     }
 
-                    // --- AUTOMATISCHE TOR-ERKENNUNG ---
+                    // --- AUTOMATISCHE TOR-ERKENNUNG MIT TORSCHÜTZE & MINUTE ---
                     if (homeScore !== null && awayScore !== null) {
                         let prev = previousScores[matchId];
                         if (prev !== undefined) {
                             if (homeScore > prev.home || awayScore > prev.away) {
-                                triggerAutomaticGoalPush(homeTeam, awayTeam, homeScore, awayScore);
+                                let lastGoalObj = (match.goals && match.goals.length > 0) ? match.goals[match.goals.length - 1] : null;
+                                let scorer = lastGoalObj ? lastGoalObj.goalGetterName : '';
+                                let min = lastGoalObj ? lastGoalObj.matchMinute : '';
+
+                                triggerAutomaticGoalPush(homeTeam, awayTeam, homeScore, awayScore, scorer, min);
                             }
                         }
                         previousScores[matchId] = { home: homeScore, away: awayScore };
@@ -1388,7 +1396,6 @@
     resetTimer();
     loadFromCloud();
 
-    // Automatischer Live-Refresh im Hintergrund alle 30 Sekunden
     setInterval(() => {
         if (!isAdmin) {
             fetchOpenLigaData();
