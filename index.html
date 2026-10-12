@@ -816,7 +816,7 @@
             const p256dh = subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))) : '';
             const auth = subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : '';
 
-            // HIER AUF DIE NEUE BAYERN-TABELLE GEÄNDERT:
+            // Direkt in die Bayern-Tabelle speichern:
             const { error } = await supabaseClient.from('push_subscriptions_bayern').upsert({
                 endpoint: subscription.endpoint,
                 p256dh: p256dh,
@@ -836,7 +836,7 @@
         }
     }
 
-    // Test-Push an die Supabase Edge Function senden
+    // Test-Push an die Supabase Edge Function senden (Spezifisch für die Bayern-Tabelle)
     async function sendTestPush() {
         try {
             const response = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
@@ -846,6 +846,7 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
+                    table: 'push_subscriptions_bayern', // Teilt der Edge Function mit, NUR die Bayern-Tabelle zu nutzen
                     title: "🔴⚫ FC Bayern Test-Alarm",
                     body: "Das Test-Tor für den FC Bayern wurde erfolgreich ausgelöst!"
                 })
@@ -854,7 +855,7 @@
             const textResponse = await response.text();
             
             if (response.ok) {
-                alert("Test-Push erfolgreich ausgelöst! Gerät(e) sollten benachrichtigt werden.");
+                alert("Test-Push für Bayern erfolgreich ausgelöst!");
             } else {
                 alert("Fehler von der Edge Function: " + textResponse);
             }
@@ -877,6 +878,7 @@
                 mode: 'cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    table: 'push_subscriptions_bayern',
                     title: `🔴⚫ TOR FÜR MÜNCHEN! (${hScore}:${aScore})`,
                     body: `${home} vs ${away} — ${detail}`
                 })
