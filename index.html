@@ -286,6 +286,7 @@
         .modal-body {
             overflow-y: auto;
             max-height: 70vh;
+            flex: 1;
         }
 
         .bayern-badge-win {
@@ -369,8 +370,6 @@
         }
         td {
             padding: 10px 8px;
-            border-bottom: 1px solid var(--border-color);
-            white-space: nowrap;
             vertical-align: top;
         }
         tr:hover { background-color: rgba(220, 5, 45, 0.03); }
@@ -416,11 +415,12 @@
             text-transform: uppercase;
         }
 
-        .team-cell-content {
+        .team-cell {
             display: flex;
             align-items: center;
             gap: 8px;
         }
+        .team-cell.right { justify-content: flex-end; }
         .team-mini-logo {
             width: 22px;
             height: 22px;
@@ -455,37 +455,6 @@
             margin-top: 15px;
             display: none;
         }
-        .match-input-card {
-            background: #131b2e;
-            border: 1px solid var(--border-color);
-            padding: 10px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
-            align-items: end;
-        }
-        .form-group label {
-            display: block;
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            margin-bottom: 3px;
-            text-transform: uppercase;
-        }
-        .form-control {
-            width: 100%;
-            padding: 6px;
-            background: #0b0f19;
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-        .form-control:focus { border-color: var(--bayern-red); outline: none; }
-
         .btn {
             background: var(--bayern-red);
             color: #ffffff;
@@ -497,7 +466,6 @@
             text-transform: uppercase;
             font-size: 0.85rem;
             width: 100%;
-            margin-top: 10px;
             transition: background 0.2s;
         }
         .btn:hover { background: var(--bayern-red-hover); }
@@ -533,7 +501,7 @@
     <div class="subtitle" id="leagueSubtitle">1. Bundesliga — Saison 2026/27</div>
     <div class="meta-info">
         <span>⚡ Web-App & Management: Jürgen Schützendorf</span>
-        <span class="supabase-badge" id="cloudStatusBadge">● Cloud-DB & Live-Sync aktiv</span>
+        <span class="supabase-badge" id="cloudStatusBadge">● OpenLigaDB & Live-Sync aktiv</span>
         <div class="live-badge" id="liveIndicatorBadge"><span class="live-dot"></span> LIVE-SPIELE LÄUFT</div>
     </div>
 
@@ -553,9 +521,10 @@
     <!-- SPIELTAGS-TABELLE -->
     <div class="section-box">
         <div class="section-header">
-            <span id="matchdayTableHeader">Spieltag 1 — Spiele & Ergebnisse</span>
+            <span id="matchdayTableHeader">Spieltag — Spiele & Ergebnisse</span>
             <div class="header-actions">
                 <button class="header-action-btn" onclick="requestPushPermission()">🔔 Push-Alarm</button>
+                <button class="header-action-btn" onclick="loadFromOpenLiga(true)">🔄 Aktualisieren</button>
             </div>
         </div>
         <div class="matchday-controls">
@@ -614,16 +583,13 @@
         </div>
     </div>
 
-    <!-- ADMIN BEREICH -->
+    <!-- ADMIN BEREICH (NUR TEST-PUSH) -->
     <div class="admin-card" id="adminCard">
         <div style="font-weight: bold; color: var(--bayern-bright-red); margin-bottom: 12px; text-transform: uppercase; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
-            <span>✏️ Bayern-Torschützen für <span id="adminMatchdayLabel">Spieltag 1</span> erfassen</span>
+            <span>🔧 Push-Benachrichtigung testen</span>
             <span style="font-size: 0.7rem; color: #3fb950;">● Admin-Modus Aktiv</span>
         </div>
-        <div id="matchInputsContainer"></div>
-        <button class="btn" onclick="saveAllScorers()">Bayern-Torschützen speichern</button>
-        <button class="btn" style="background: #238636; margin-top: 10px;" onclick="sendTestPush()">🚀 Test-Push Benachrichtigung senden</button>
-        <button class="btn" style="background: #e3b341; color: #0b0f19; margin-top: 10px;" onclick="simulateLiveGoal()">⚡ Live-Tor simulieren (Test)</button>
+        <button class="btn" style="background: #238636;" onclick="sendTestPush()">🚀 Test-Push Benachrichtigung senden</button>
     </div>
 
     <div class="admin-toggle-wrapper">
@@ -685,7 +651,7 @@
                     <thead>
                         <tr>
                             <th style="width: 40px; text-align: center;">Pl.</th>
-                            <th>Spieler</th>
+                            <th>Spieler & Verein</th>
                             <th style="text-align: center; width: 70px;">Tore</th>
                         </tr>
                     </thead>
@@ -773,11 +739,11 @@
 
     let teamLogos = {};
     let openLigaMatches = {};
-    let bayernCloudScorers = {};
     let previousScores = {}; 
-    let currentMatchday = parseInt(localStorage.getItem('bundesliga_current_matchday')) || 1;
+    let currentMatchday = 1;
+    let detailedGoalsCache = {};
+    let isInitialized = false;
 
-    // VAPID Public Key Helper für Base64-Konvertierung
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
         const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
@@ -789,7 +755,6 @@
         return outputArray;
     }
 
-    // Push Benachrichtigungen aktivieren und mit VAPID Key in der Bayern-Tabelle speichern
     async function requestPushPermission() {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
             alert("Push-Benachrichtigungen werden von diesem Browser leider nicht unterstützt.");
@@ -816,44 +781,33 @@
             const p256dh = subscription.getKey('p256dh') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('p256dh')))) : '';
             const auth = subscription.getKey('auth') ? btoa(String.fromCharCode.apply(null, new Uint8Array(subscription.getKey('auth')))) : '';
 
-            // Direkt in die Bayern-Tabelle speichern:
-            const { error } = await supabaseClient.from('push_subscriptions_bayern').upsert({
+            await supabaseClient.from('push_subscriptions_bayern').upsert({
                 endpoint: subscription.endpoint,
                 p256dh: p256dh,
                 auth: auth
             }, { onConflict: 'endpoint' });
 
-            if (error) {
-                console.error("Supabase Fehlerdetails:", error);
-                alert("Fehler in Supabase: " + error.message);
-            } else {
-                alert("Push-Alarm für Bayern erfolgreich aktiviert! Dein Gerät ist jetzt registriert.");
-            }
-
+            alert("Push-Alarm für Bayern erfolgreich aktiviert!");
         } catch (error) {
             console.error('Fehler bei der Push-Registrierung:', error);
             alert("Fehler beim Aktivieren der Benachrichtigung: " + error.message);
         }
     }
 
-    // Test-Push an die Supabase Edge Function senden (Spezifisch für die Bayern-Tabelle)
     async function sendTestPush() {
         try {
             const response = await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
                 method: 'POST',
                 mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    table: 'push_subscriptions_bayern', // Teilt der Edge Function mit, NUR die Bayern-Tabelle zu nutzen
+                    table: 'push_subscriptions_bayern',
                     title: "🔴⚫ FC Bayern Test-Alarm",
                     body: "Das Test-Tor für den FC Bayern wurde erfolgreich ausgelöst!"
                 })
             });
 
             const textResponse = await response.text();
-            
             if (response.ok) {
                 alert("Test-Push für Bayern erfolgreich ausgelöst!");
             } else {
@@ -865,7 +819,6 @@
         }
     }
 
-    // Automatischer Push bei echtem Tor inkl. Torschütze und Minute
     async function triggerAutomaticGoalPush(home, away, hScore, aScore, scorerName = '', minute = '') {
         try {
             let detail = scorerName ? 'Tor durch ' + scorerName : "Tor!";
@@ -883,16 +836,9 @@
                     body: `${home} vs ${away} — ${detail}`
                 })
             });
-            console.log(`Tor-Push ausgelöst für ${home} vs ${away} (${hScore}:${aScore})`);
         } catch (e) {
             console.error("Fehler beim automatischen Tor-Push:", e);
         }
-    }
-
-    // Live-Tor manuell simulieren (Test-Button mit Torschütze)
-    async function simulateLiveGoal() {
-        await triggerAutomaticGoalPush("FC Bayern München", "Borussia Dortmund", 1, 0, "Harry Kane", "14");
-        alert("Simuliertes Live-Tor gesendet!");
     }
 
     function toggleAdminMode() {
@@ -900,34 +846,88 @@
         if (isAdmin) {
             isAdmin = false;
             adminCard.style.display = 'none';
-            renderMatchdayTable();
             return;
         }
         let enteredPin = prompt("Bitte Admin-PIN eingeben:");
         if (enteredPin === ADMIN_PIN) {
             isAdmin = true;
             adminCard.style.display = 'block';
-            renderAll();
+            alert("Admin-Modus erfolgreich aktiviert!");
         } else if (enteredPin !== null) {
             alert("Falsche PIN!");
         }
     }
 
-    async function loadFromCloud(showAlert = false) {
+    async function fetchMatchDetails(matchID) {
+        if (detailedGoalsCache[matchID]) return detailedGoalsCache[matchID];
         try {
-            let [matchesRes, logosRes] = await Promise.all([
-                supabaseClient.from('bundesliga_spiele').select('*'),
-                supabaseClient.from('bundesliga_vereins_logos').select('*')
-            ]);
+            let res = await fetch(`https://api.openligadb.de/getmatchdata/${matchID}`);
+            let matchData = await res.json();
+            
+            let homeGoals = [];
+            let awayGoals = [];
+            
+            let rawGoals = matchData.goals || matchData.matchGoals || matchData.goalGetters || [];
+            if ((!rawGoals || rawGoals.length === 0) && matchData.goalsData && Array.isArray(matchData.goalsData)) {
+                rawGoals = matchData.goalsData;
+            }
 
-            bayernCloudScorers = {};
-            if (matchesRes.data && Array.isArray(matchesRes.data)) {
-                matchesRes.data.forEach(row => {
-                    if (row.match_id && row.bayern_scorers) {
-                        bayernCloudScorers[row.match_id] = row.bayern_scorers;
+            if (Array.isArray(rawGoals) && rawGoals.length > 0) {
+                rawGoals.sort((a, b) => (a.matchMinute || a.goalMinute || 0) - (b.matchMinute || b.goalMinute || 0));
+
+                let prevH = 0;
+                let prevA = 0;
+
+                rawGoals.forEach(g => {
+                    let isOwn = g.isOwnGoal === true || (g.comment && g.comment.toLowerCase().includes('eigentor'));
+                    let name = g.goalGetterName || g.name || g.playerName || "Tor";
+                    let min = g.matchMinute !== undefined ? g.matchMinute : (g.goalMinute !== undefined ? g.goalMinute : '');
+                    let minStr = min !== '' ? `${min}''` : '';
+                    
+                    let goalText = isOwn ? `🚫 ${name} (Eigentor) (${minStr})` : `⚽ ${name} (${minStr})`;
+                    
+                    let currH = g.scoreTeam1 ?? prevH;
+                    let currA = g.scoreTeam2 ?? prevA;
+
+                    let isHomeGoal = false;
+                    if (currH > prevH) {
+                        isHomeGoal = true;
+                    } else if (currA > prevA) {
+                        isHomeGoal = false;
+                    } else if (matchData.team1 && (g.teamID === matchData.team1.teamID || g.teamId === matchData.team1.teamID)) {
+                        isHomeGoal = true;
+                    } else if (matchData.team2 && (g.teamID === matchData.team2.teamID || g.teamId === matchData.team2.teamID)) {
+                        isHomeGoal = false;
+                    } else {
+                        isHomeGoal = true;
+                    }
+
+                    prevH = currH;
+                    prevA = currA;
+
+                    if (isHomeGoal) {
+                        homeGoals.push(goalText);
+                    } else {
+                        awayGoals.push(goalText);
                     }
                 });
             }
+
+            let details = { home: homeGoals, away: awayGoals };
+            detailedGoalsCache[matchID] = details;
+            return details;
+        } catch (e) {
+            return { home: [], away: [] };
+        }
+    }
+
+    async function loadFromOpenLiga(showAlert = false) {
+        try {
+            let [response, logosRes] = await Promise.all([
+                fetch('https://api.openligadb.de/getmatchdata/bl1/2026'),
+                supabaseClient.from('bundesliga_vereins_logos').select('*')
+            ]);
+            let data = await response.json();
 
             if (logosRes.data) {
                 teamLogos = {};
@@ -938,25 +938,18 @@
                 });
             }
 
-            if (showAlert) alert("Daten erfolgreich aktualisiert!");
-        } catch (e) {
-            console.log('Ladehinweis:', e);
-            if (showAlert) alert("Fehler beim Aktualisieren der Daten.");
-        }
-
-        await fetchOpenLigaData();
-    }
-
-    async function fetchOpenLigaData() {
-        try {
-            let response = await fetch('https://api.openligadb.de/getmatchdata/bl1/2026');
-            let data = await response.json();
-
             openLigaMatches = {};
             let hasLiveMatches = false;
 
             if (Array.isArray(data)) {
                 data.forEach(match => {
+                    if (match.team1 && match.team1.teamName && match.team1.teamIconUrl) {
+                        teamLogos[match.team1.teamName.trim().toLowerCase()] = match.team1.teamIconUrl;
+                    }
+                    if (match.team2 && match.team2.teamName && match.team2.teamIconUrl) {
+                        teamLogos[match.team2.teamName.trim().toLowerCase()] = match.team2.teamIconUrl;
+                    }
+
                     let isCurrentlyLive = !match.matchIsFinished && match.matchResults && match.matchResults.length > 0;
                     if (isCurrentlyLive) hasLiveMatches = true;
 
@@ -984,7 +977,6 @@
                         }
                     }
 
-                    // --- AUTOMATISCHE TOR-ERKENNUNG MIT TORSCHÜTZE & MINUTE ---
                     if (homeScore !== null && awayScore !== null) {
                         let prev = previousScores[matchId];
                         if (prev !== undefined) {
@@ -1003,28 +995,9 @@
                     let dateStr = match.matchDateTime ? match.matchDateTime.split('T')[0] : "";
                     let timeStr = !isNaN(matchDateObj.getTime()) ? matchDateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : "15:30";
 
-                    let apiScorers = [];
-                    if (match.goals && Array.isArray(match.goals)) {
-                        match.goals.forEach(goal => {
-                            let name = goal.goalGetterName;
-                            if (name) {
-                                let min = (goal.matchMinute !== null && goal.matchMinute !== undefined) ? goal.matchMinute + "'" : "";
-                                let teamNameAssigned = goal.teamID === match.team1.teamID ? homeTeam : awayTeam;
-                                let hPts = (goal.scoreTeam1 !== null && goal.scoreTeam1 !== undefined) ? goal.scoreTeam1 : goal.scoreGoal1;
-                                let aPts = (goal.scoreTeam2 !== null && goal.scoreTeam2 !== undefined) ? goal.scoreTeam2 : goal.scoreGoal2;
-                                let scoreStr = (hPts !== undefined && aPts !== undefined) ? ` (${hPts}:${aPts})` : "";
-                                let minStr = min ? ` (${min})` : "";
-                                apiScorers.push({
-                                    name: name,
-                                    team: teamNameAssigned,
-                                    text: `⚽ ${name}${minStr}${scoreStr}`
-                                });
-                            }
-                        });
-                    }
-
                     openLigaMatches[mDay].push({
                         match_id: matchId,
+                        matchID: match.matchID,
                         home: homeTeam,
                         away: awayTeam,
                         date: dateStr,
@@ -1032,8 +1005,7 @@
                         homeScore: homeScore,
                         awayScore: awayScore,
                         isFinished: match.matchIsFinished,
-                        bayernScorers: bayernCloudScorers[matchId] || "",
-                        apiGoals: apiScorers
+                        dateTime: match.matchDateTime
                     });
                 });
             }
@@ -1043,111 +1015,176 @@
                 liveBadge.style.display = hasLiveMatches ? 'flex' : 'none';
             }
 
+            if (!isInitialized) {
+                isInitialized = true;
+                currentMatchday = determineCurrentMatchday();
+            }
+
+            preloadAllFinishedMatchDetails();
+
+            if (showAlert) alert("Daten erfolgreich aktualisiert!");
         } catch (e) {
             console.error("Fehler beim Abrufen von OpenLigaDB:", e);
+            if (showAlert) alert("Fehler beim Aktualisieren der Daten.");
         }
 
         renderAll();
     }
 
+    async function preloadAllFinishedMatchDetails() {
+        for (let mDay in openLigaMatches) {
+            let matches = openLigaMatches[mDay];
+            if (Array.isArray(matches)) {
+                for (let m of matches) {
+                    if ((m.homeScore !== null && m.homeScore !== undefined) || m.isFinished) {
+                        await fetchMatchDetails(m.matchID);
+                    }
+                }
+            }
+        }
+    }
+
+    function determineCurrentMatchday() {
+        const today = new Date().toISOString().split('T')[0];
+        let bestMatchday = 1;
+        let minTimeDiff = Infinity;
+        let hasOngoingOrPast = false;
+
+        for (let mDay in openLigaMatches) {
+            let matches = openLigaMatches[mDay];
+            if (!Array.isArray(matches) || matches.length === 0) continue;
+
+            for (let m of matches) {
+                if (!m.dateTime) continue;
+                let matchDate = m.dateTime.split('T')[0];
+                let timeDiff = Math.abs(new Date(matchDate) - new Date(today));
+
+                if (matchDate >= today && timeDiff < minTimeDiff) {
+                    minTimeDiff = timeDiff;
+                    bestMatchday = parseInt(mDay);
+                    hasOngoingOrPast = true;
+                } else if (!hasOngoingOrPast && matchDate <= today) {
+                    bestMatchday = parseInt(mDay);
+                }
+            }
+        }
+        return Math.max(1, Math.min(34, bestMatchday));
+    }
+
     function changeMatchday(amount) {
         currentMatchday = Math.max(1, Math.min(34, currentMatchday + amount));
-        localStorage.setItem('bundesliga_current_matchday', currentMatchday);
         renderAll();
     }
 
     function renderAll() {
         document.getElementById('matchdayDisplay').textContent = "Spieltag " + currentMatchday;
-        document.getElementById('adminMatchdayLabel').textContent = "Spieltag " + currentMatchday;
         document.getElementById('matchdayTableHeader').textContent = "Spieltag " + currentMatchday + " — Spiele & Ergebnisse";
         
         renderMatchdayTable();
         renderTable();
         renderBayernStats();
-        if (isAdmin) renderInputForm();
     }
 
-    function getTeamHtml(teamName, alignRight = false) {
-        let logoUrl = teamLogos[teamName.trim().toLowerCase()];
+    function getTeamHtml(teamName, alignRight = false, goals = []) {
+        let logoUrl = teamLogos[teamName.trim().toLowerCase()] || "";
         let logoHtml = logoUrl ? '<img src="' + logoUrl + '" alt="' + teamName + '" class="team-mini-logo">' : '';
 
+        let goalsHtml = '';
+        if (goals && goals.length > 0) {
+            let alignmentStyle = alignRight ? 'text-align: right;' : 'text-align: left;';
+            let indentStyle = alignRight ? 'padding-right: 30px;' : 'padding-left: 30px;';
+            let goalsText = goals.join('<br>');
+            goalsHtml = `<div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 4px; line-height: 1.3; ${alignmentStyle} ${indentStyle}">${goalsText}</div>`;
+        }
+
         if (alignRight) {
-            return '<div class="team-cell-content" style="justify-content: flex-end;"><span>' + teamName + '</span>' + logoHtml + '</div>';
+            return `
+                <div style="display: flex; flex-direction: column;">
+                    <div class="team-cell right">
+                        <span>${teamName}</span>
+                        ${logoHtml}
+                    </div>
+                    ${goalsHtml}
+                </div>
+            `;
         } else {
-            return '<div class="team-cell-content">' + logoHtml + '<span>' + teamName + '</span></div>';
+            return `
+                <div style="display: flex; flex-direction: column;">
+                    <div class="team-cell">
+                        ${logoHtml}
+                        <span>${teamName}</span>
+                    </div>
+                    ${goalsHtml}
+                </div>
+            `;
         }
     }
 
     function openStaffModal() { document.getElementById('staffModal').style.display = 'flex'; }
     function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
 
-    function openLeagueScorersModal() {
-        renderLeagueScorersModalList();
-        document.getElementById('leagueScorersModal').style.display = 'flex';
-    }
-    function closeLeagueScorersModal() { document.getElementById('leagueScorersModal').style.display = 'none'; }
-
-    function renderLeagueScorersModalList() {
+    async function openLeagueScorersModal() {
         let tbody = document.getElementById('leagueScorersModalBody');
-        tbody.innerHTML = '';
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Lade Torschützen...</td></tr>`;
+        document.getElementById('leagueScorersModal').style.display = 'flex';
+
+        await preloadAllFinishedMatchDetails();
 
         let scorersMap = {};
 
-        Object.values(openLigaMatches).forEach(matchList => {
-            if (!Array.isArray(matchList)) return;
-            matchList.forEach(m => {
-                if (m.apiGoals && Array.isArray(m.apiGoals)) {
-                    m.apiGoals.forEach(goalObj => {
-                        let namePart = goalObj.name;
-                        let key = namePart.toLowerCase();
-                        if (!scorersMap[key]) {
-                            scorersMap[key] = { name: namePart, goals: 0 };
-                        }
-                        scorersMap[key].goals++;
-                    });
-                }
+        for (let matchID in detailedGoalsCache) {
+            let details = detailedGoalsCache[matchID];
+            for (let mDay in openLigaMatches) {
+                let found = openLigaMatches[mDay].find(m => m.matchID == matchID);
+                if (found) {
+                    let parseGoals = (list, team) => {
+                        list.forEach(gText => {
+                            if (gText.includes('🚫')) return;
 
-                if (m.bayernScorers && typeof m.bayernScorers === 'string') {
-                    let entries = m.bayernScorers.split(',');
-                    entries.forEach(entry => {
-                        let parts = entry.trim().split('(');
-                        let pName = parts[0].trim();
-                        if (pName) {
-                            let count = 1;
-                            if (parts[1]) {
-                                let numMatch = parts[1].match(/\d+/);
-                                if (numMatch) count = parseInt(numMatch[0]);
+                            let clean = gText.replace('⚽', '').trim();
+                            let playerName = clean.split('(')[0].trim();
+                            
+                            if (playerName && playerName.toLowerCase() !== 'tor') {
+                                if (!scorersMap[playerName]) scorersMap[playerName] = { count: 0, team: team };
+                                scorersMap[playerName].count++;
                             }
-                            let key = pName.toLowerCase();
-                            if (!scorersMap[key]) {
-                                scorersMap[key] = { name: pName, goals: 0 };
-                            }
-                            scorersMap[key].goals = Math.max(scorersMap[key].goals, count);
-                        }
-                    });
+                        });
+                    };
+                    parseGoals(details.home, found.home);
+                    parseGoals(details.away, found.away);
+                    break;
                 }
-            });
-        });
-
-        let scorersArray = Object.values(scorersMap);
-
-        if (scorersArray.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Noch keine Torschützen für die laufende Saison erfasst.</td></tr>`;
-            return;
+            }
         }
 
-        scorersArray.sort((a, b) => b.goals - a.goals);
+        let scorersArray = Object.keys(scorersMap).map(name => ({
+            name: name,
+            goals: scorersMap[name].count,
+            team: scorersMap[name].team
+        }));
 
-        scorersArray.forEach((s, idx) => {
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="text-align: center; font-weight: bold;">${idx + 1}.</td>
-                <td>${s.name}</td>
-                <td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${s.goals}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        tbody.innerHTML = '';
+        if (scorersArray.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Noch keine Torschützen in dieser Saison erfasst.</td></tr>`;
+        } else {
+            scorersArray.sort((a, b) => b.goals - a.goals);
+            scorersArray.forEach((s, idx) => {
+                let tr = document.createElement('tr');
+                let teamHtml = getTeamHtml(s.team, false);
+                tr.innerHTML = `
+                    <td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red);">${idx + 1}.</td>
+                    <td>
+                        <div style="font-weight: bold; color: #ffffff;">${s.name}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">${teamHtml}</div>
+                    </td>
+                    <td style="text-align: center; font-weight: bold; color: var(--bayern-bright-red); font-size: 1.1rem;">${s.goals}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
     }
+
+    function closeLeagueScorersModal() { document.getElementById('leagueScorersModal').style.display = 'none'; }
 
     function openBayernMatchesModal() {
         let modalBody = document.getElementById('bayernMatchesModalBody');
@@ -1209,7 +1246,7 @@
 
     function closeBayernMatchesModal() { document.getElementById('bayernMatchesModal').style.display = 'none'; }
 
-    function renderMatchdayTable() {
+    async function renderMatchdayTable() {
         let tbody = document.getElementById('matchdayTableBody');
         tbody.innerHTML = '';
         let existingMatches = openLigaMatches[currentMatchday] || [];
@@ -1219,7 +1256,7 @@
             return;
         }
 
-        existingMatches.forEach((m) => {
+        for (let m of existingMatches) {
             let hasResult = m.homeScore !== undefined && m.homeScore !== null && m.awayScore !== undefined && m.awayScore !== null;
             let formattedDate = m.date ? m.date.split('-').reverse().join('.') : '-';
             let timeStr = m.time ? ' ' + m.time + ' Uhr' : '';
@@ -1228,36 +1265,33 @@
 
             let resultDisplay = hasResult ? '<strong>' + m.homeScore + ':' + m.awayScore + '</strong>' : '<span style="color: var(--text-muted); font-style: italic;">vs</span>';
             if (hasResult && m.isFinished) {
-                resultDisplay += '<div style="font-size: 0.65rem; color: #3fb950; margin-top: 2px;">(Endstand)</div>';
+                resultDisplay += '<div style="font-size: 0.65rem; color: #3fb950; margin-top: 2px; text-align: center;">(Endstand)</div>';
             } else if (hasResult) {
-                resultDisplay += '<div style="font-size: 0.65rem; color: #e3b341; margin-top: 2px;">(Live)</div>';
+                resultDisplay += '<div style="font-size: 0.65rem; color: #e3b341; margin-top: 2px; text-align: center;">(Live)</div>';
             }
 
-            let scorersText = m.bayernScorers || "";
-            if (scorersText.trim() !== "") {
-                resultDisplay += '<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">⚽ ' + scorersText + '</div>';
-            } else if (m.apiGoals && m.apiGoals.length > 0) {
-                let apiGoalsTexts = m.apiGoals.map(g => g.text);
-                resultDisplay += '<div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 5px; line-height: 1.4;">' + apiGoalsTexts.join('<br>') + '</div>';
+            let matchGoals = { home: [], away: [] };
+            if (hasResult) {
+                matchGoals = await fetchMatchDetails(m.matchID);
             }
 
             let tr = document.createElement('tr');
             if (isBayernMatch) tr.classList.add('bayern-match-row');
 
-            let homeCellContent = getTeamHtml(m.home, true);
-            let awayCellContent = getTeamHtml(m.away, false);
+            let homeCellContent = getTeamHtml(m.home, true, matchGoals.home);
+            let awayCellContent = getTeamHtml(m.away, false, matchGoals.away);
 
             if (m.home.includes("Bayern")) homeCellContent = '<span class="bayern-highlight">' + homeCellContent + '</span>';
             if (m.away.includes("Bayern")) awayCellContent = '<span class="bayern-highlight">' + awayCellContent + '</span>';
 
             tr.innerHTML = `
-                <td style="font-size: 0.8rem; color: #ffffff;">${formattedDate}${timeStr}</td>
-                <td style="text-align: right;">${homeCellContent}</td>
-                <td style="text-align: center;">${resultDisplay}</td>
-                <td>${awayCellContent}</td>
+                <td style="font-size: 0.8rem; color: #ffffff; vertical-align: top;">${formattedDate}${timeStr}</td>
+                <td style="text-align: right; vertical-align: top;">${homeCellContent}</td>
+                <td style="text-align: center; vertical-align: middle;">${resultDisplay}</td>
+                <td style="text-align: left; vertical-align: top;">${awayCellContent}</td>
             `;
             tbody.appendChild(tr);
-        });
+        }
     }
 
     function renderTable() {
@@ -1340,55 +1374,6 @@
         `;
     }
 
-    function renderInputForm() {
-        let container = document.getElementById('matchInputsContainer');
-        container.innerHTML = '';
-        let existingMatches = openLigaMatches[currentMatchday] || [];
-        let bayernMatches = existingMatches.filter(m => m.home.includes("Bayern") || m.away.includes("Bayern"));
-
-        if (bayernMatches.length === 0) {
-            container.innerHTML = `<div style="color: var(--text-muted); font-size: 0.8rem;">Kein Bayern-Spiel an diesem Spieltag.</div>`;
-            return;
-        }
-
-        bayernMatches.forEach((m) => {
-            let card = document.createElement('div');
-            card.className = 'match-input-card';
-            card.innerHTML = `
-                <div style="font-size: 0.8rem; color: var(--bayern-bright-red); font-weight: bold; margin-bottom: 8px;">${m.home} vs ${m.away}</div>
-                <div class="form-grid">
-                    <div class="form-group"><label>Bayern-Torschützen (z.B. Kane (2), Musiala)</label><input type="text" id="bs_${m.match_id}" class="form-control" value="${m.bayernScorers || ''}" placeholder="Torschützen eingeben..."></div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    async function saveAllScorers() {
-        let existingMatches = openLigaMatches[currentMatchday] || [];
-        let bayernMatches = existingMatches.filter(m => m.home.includes("Bayern") || m.away.includes("Bayern"));
-
-        for (let m of bayernMatches) {
-            let inputElem = document.getElementById('bs_' + m.match_id);
-            if (inputElem) {
-                let val = inputElem.value.trim();
-                m.bayernScorers = val;
-                bayernCloudScorers[m.match_id] = val;
-
-                await supabaseClient.from('bundesliga_spiele').upsert({
-                    match_id: m.match_id,
-                    matchday: currentMatchday,
-                    home_team: m.home,
-                    away_team: m.away,
-                    bayern_scorers: val
-                }, { onConflict: 'match_id' });
-            }
-        }
-
-        renderAll();
-        alert("Bayern-Torschützen erfolgreich in der Cloud gespeichert!");
-    }
-
     window.onclick = function(e) {
         if (e.target === document.getElementById('bayernMatchesModal')) closeBayernMatchesModal();
         if (e.target === document.getElementById('staffModal')) closeStaffModal();
@@ -1397,11 +1382,11 @@
 
     showSlide(0);
     resetTimer();
-    loadFromCloud();
+    loadFromOpenLiga();
 
     setInterval(() => {
         if (!isAdmin) {
-            fetchOpenLigaData();
+            loadFromOpenLiga();
         }
     }, 30000);
 </script>
