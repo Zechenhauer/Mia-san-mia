@@ -13,19 +13,18 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: #131b2e;
+            --bg-color: #0c0809;
+            --card-bg: #1a0f12;
             --text-color: #f0f6fc;
-            --text-muted: #8b949e;
-            --border-color: #30363d;
+            --text-muted: #9e8b8f;
+            --border-color: #3d1c22;
             --bayern-red: #dc052d;
             --bayern-red-hover: #b00424;
-            --bayern-dark: #86001a;
-            --bayern-dark-card: #141925;
+            --bayern-dark: #660013;
+            --bayern-dark-card: #211216;
             --accent-green: rgba(46, 160, 67, 0.25);
-            --accent-yellow: rgba(227, 179, 64, 0.22);
-            --bayern-gold: #ffcc00;
-            --bayern-bright-red: #ff334b;
+            --accent-white: rgba(255, 255, 255, 0.22);
+            --bayern-bright-red: #ff1a3c;
         }
 
         * { box-sizing: border-box; }
@@ -43,10 +42,10 @@
             width: 100%;
             max-width: 1000px;
             background: var(--card-bg);
-            border: 1px solid rgba(220, 5, 45, 0.3);
+            border: 1px solid rgba(220, 5, 45, 0.4);
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 4px 20px rgba(220, 5, 45, 0.15);
+            box-shadow: 0 4px 20px rgba(220, 5, 45, 0.2);
         }
 
         .banner-wrapper {
@@ -54,7 +53,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #0b0f19;
+            background-color: #0c0809;
             border: 2px solid var(--bayern-red);
             border-radius: 8px;
             margin-bottom: 15px;
@@ -87,7 +86,7 @@
         .slide-caption {
             margin-top: 8px;
             font-size: 0.95rem;
-            color: var(--bayern-gold);
+            color: #ffffff;
             font-weight: bold;
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -97,7 +96,7 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(134, 0, 26, 0.8);
+            background: rgba(102, 0, 19, 0.85);
             color: white;
             border: 1px solid var(--bayern-red);
             padding: 10px 14px;
@@ -196,7 +195,7 @@
         }
 
         .section-box {
-            background: #0b0f19;
+            background: var(--bayern-dark-card);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 15px;
@@ -244,8 +243,8 @@
         .header-action-btn:hover { background: rgba(0, 0, 0, 0.4); }
 
         .btn-modal-open {
-            background: var(--bayern-gold);
-            color: #0b0f19;
+            background: #ffffff;
+            color: #0c0809;
             border: none;
             padding: 5px 12px;
             border-radius: 4px;
@@ -255,7 +254,7 @@
             text-transform: uppercase;
             transition: background 0.2s;
         }
-        .btn-modal-open:hover { background: #ffdb4d; }
+        .btn-modal-open:hover { background: #e0e0e0; }
 
         .dashboard-grid {
             display: grid;
@@ -273,7 +272,7 @@
         .dash-card-title {
             font-size: 0.75rem;
             font-weight: bold;
-            color: var(--bayern-gold);
+            color: #ffffff;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 10px;
@@ -287,7 +286,7 @@
         }
         .dash-btn-link {
             background: var(--bayern-dark);
-            color: var(--bayern-gold);
+            color: #ffffff;
             border: 1px solid var(--bayern-red);
             padding: 6px 12px;
             border-radius: 4px;
@@ -309,12 +308,12 @@
             padding-right: 4px;
         }
         .legends-scroll-box::-webkit-scrollbar { width: 6px; }
-        .legends-scroll-box::-webkit-scrollbar-track { background: #070d1a; border-radius: 3px; }
+        .legends-scroll-box::-webkit-scrollbar-track { background: #0c0809; border-radius: 3px; }
         .legends-scroll-box::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
         .legends-scroll-box::-webkit-scrollbar-thumb:hover { background: var(--bayern-red); }
 
         .legend-row {
-            background: #1b2234;
+            background: #2b161c;
             padding: 6px 10px;
             border-radius: 4px;
             font-size: 0.85rem;
@@ -326,14 +325,14 @@
             flex-shrink: 0;
         }
         .legend-row:hover {
-            background: rgba(220, 5, 45, 0.2);
+            background: rgba(220, 5, 45, 0.25);
             color: var(--bayern-bright-red);
         }
 
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.8);
             backdrop-filter: blur(4px);
             display: none;
             justify-content: center;
@@ -342,8 +341,8 @@
             padding: 15px;
         }
         .modal-card {
-            background: #131b2e;
-            border: 1px solid var(--bayern-red);
+            background: var(--card-bg);
+            border: 2px solid var(--bayern-red);
             border-radius: 12px;
             padding: 20px;
             width: 100%;
@@ -351,7 +350,7 @@
             max-height: 85vh;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(220, 5, 45, 0.3);
         }
         .modal-body {
             overflow-y: auto;
@@ -370,7 +369,7 @@
         }
 
         .matchday-btn {
-            background: #21262d;
+            background: #2b161c;
             border: 1px solid var(--border-color);
             color: var(--text-color);
             padding: 6px 12px;
@@ -379,7 +378,7 @@
             font-weight: bold;
             transition: background 0.2s;
         }
-        .matchday-btn:hover { background: var(--bayern-dark); border-color: var(--bayern-red); }
+        .matchday-btn:hover { background: var(--bayern-red); color: #fff; border-color: var(--bayern-red); }
 
         .bayern-highlight { 
             color: #ffffff !important; 
@@ -397,7 +396,7 @@
         }
 
         tr.match-win td { background: rgba(46, 160, 67, 0.2) !important; border-top: 1px solid rgba(46, 160, 67, 0.4); border-bottom: 1px solid rgba(46, 160, 67, 0.4); }
-        tr.match-draw td { background: rgba(227, 179, 64, 0.2) !important; border-top: 1px solid rgba(227, 179, 64, 0.4); border-bottom: 1px solid rgba(227, 179, 64, 0.4); }
+        tr.match-draw td { background: rgba(255, 255, 255, 0.15) !important; border-top: 1px solid rgba(255, 255, 255, 0.3); border-bottom: 1px solid rgba(255, 255, 255, 0.3); }
         tr.match-loss td { background: rgba(248, 81, 73, 0.2) !important; border-top: 1px solid rgba(248, 81, 73, 0.4); border-bottom: 1px solid rgba(248, 81, 73, 0.4); }
 
         .table-container {
@@ -423,18 +422,18 @@
             padding: 10px 8px;
             vertical-align: top;
         }
-        tr:hover { background-color: rgba(220, 5, 45, 0.03); }
+        tr:hover { background-color: rgba(220, 5, 45, 0.05); }
 
         tr.cl-zone td { background: rgba(35, 134, 54, 0.15); border-top: 1px solid rgba(35, 134, 54, 0.2); border-bottom: 1px solid rgba(35, 134, 54, 0.2); }
         tr.el-zone td { background: rgba(51, 133, 255, 0.15); border-top: 1px solid rgba(51, 133, 255, 0.2); border-bottom: 1px solid rgba(51, 133, 255, 0.2); }
         tr.ecl-zone td { background: rgba(158, 106, 3, 0.2); border-top: 1px solid rgba(158, 106, 3, 0.25); border-bottom: 1px solid rgba(158, 106, 3, 0.25); }
-        tr.relegation-zone td { background: rgba(227, 179, 64, 0.2); border-top: 1px solid rgba(227, 179, 64, 0.25); border-bottom: 1px solid rgba(227, 179, 64, 0.25); }
+        tr.relegation-zone td { background: rgba(255, 255, 255, 0.15); border-top: 1px solid rgba(255, 255, 255, 0.25); border-bottom: 1px solid rgba(255, 255, 255, 0.25); }
         tr.relegation-direct-zone td { background: rgba(180, 40, 40, 0.2); border-top: 1px solid rgba(180, 40, 40, 0.25); border-bottom: 1px solid rgba(180, 40, 40, 0.25); }
 
         tr.bayern-team-row td {
             font-weight: bold;
             color: var(--bayern-bright-red);
-            background: rgba(220, 5, 45, 0.2) !important;
+            background: rgba(220, 5, 45, 0.25) !important;
             border-top: 1px solid rgba(220, 5, 45, 0.5) !important;
             border-bottom: 1px solid rgba(220, 5, 45, 0.5) !important;
         }
@@ -445,7 +444,7 @@
             gap: 10px;
         }
         .stat-card {
-            background: #1b1622;
+            background: #140a0c;
             border: 1px solid var(--border-color);
             border-radius: 6px;
             padding: 10px;
@@ -496,7 +495,7 @@
         }
 
         .admin-card {
-            background: #1b1622;
+            background: #140a0c;
             border: 1px solid var(--bayern-red);
             border-radius: 8px;
             padding: 15px;
@@ -542,7 +541,7 @@
             gap: 6px;
         }
         .visitor-counter strong {
-            color: var(--bayern-gold);
+            color: #ffffff;
         }
     </style>
 </head>
@@ -577,13 +576,13 @@
             <span>FC Bayern München — Saison-Auswertung</span>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <button class="btn-modal-open" onclick="openStaffModal()" style="background: #3fb950; color: #fff;">🩺 Funktionsteam</button>
-                <button class="btn-modal-open" onclick="openLeagueScorersModal()" style="background: #e3b341; color: #0b0f19;">⚽ Bundesliga-Torschützen</button>
+                <button class="btn-modal-open" onclick="openLeagueScorersModal()" style="background: #ffffff; color: #0c0809;">⚽ Bundesliga-Torschützen</button>
                 <button class="btn-modal-open" onclick="openBayernMatchesModal()">📅 Alle Spiele</button>
             </div>
         </div>
         <div class="stats-grid" id="bayernStatsGrid"></div>
         <div style="margin-top: 15px; background: var(--bayern-dark-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 15px;" id="formCurveWidgetBox">
-            <div style="font-size: 0.75rem; font-weight: bold; color: var(--bayern-gold); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Formverlauf (letzte 15 Spiele):</div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #ffffff; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Formverlauf (letzte 15 Spiele):</div>
             <div id="formCurveWidget" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">Noch keine beendeten Spiele</div>
         </div>
     </div>
@@ -610,26 +609,26 @@
             <div class="dash-card-title">⭐ FC Bayern-Legenden (Ruhmeshalle)</div>
             <div class="dash-card-content">
                 <div class="legends-scroll-box">
-                    <div class="legend-row" onclick="openLegendModal('Gerd Müller', 'Der Bomber der Nation', 'Legendärer Rekordtorjäger des FC Bayern. Seine Torquote unerreicht, erzielte 365 Bundesligatore und schoss Deutschland 1974 zum WM-Titel.')"><span>Gerd Müller („Der Bomber“)</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Franz Beckenbauer', 'Der Kaiser', 'Lichtgestalt des deutschen Fußballs. Prägte den FC Bayern als Spieler und Trainer und holte die WM 2006 nach Deutschland.')"><span>Franz Beckenbauer („Der Kaiser“)</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Sepp Maier', 'Die Katze von Anzing', 'Weltmeister-Torhüter und Rekordspieler des FC Bayern mit über 470 Bundesligaspielen in Folge.')"><span>Sepp Maier</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Uli Hoeneß', 'Macher & Präsident', 'Prägte den Verein jahrzehntelang erst als erfolgreicher Spieler und danach als Manager und Präsident an der Weltspitze.')"><span>Uli Hoeneß</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Karl-Heinz Rummenigge', 'Europas Fußballer des Jahres', 'Weltklasse-Stürmer und späterer Vorstandsvorsitzender, der den FC Bayern in die europäische Elite führte.')"><span>Karl-Heinz Rummenigge</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Paul Breitner', 'Weltmeister & Stratege', 'Genialer Kopf im Mittelfeld, 1974 und 1982 Torschütze in WM-Finals und Herzstück der Bayern-Erfolge.')"><span>Paul Breitner</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Lothar Matthäus', 'Weltfußballer & Rekordnationalspieler', 'Absolute Führungsspieler-Legende, Kapitän der Nationalmannschaft und Weltfußballer 1991.')"><span>Lothar Matthäus</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Oliver Kahn', 'Der Titan', 'Kult-Torhüter und Mentalitätsmonster, mehrfacher Welttorhüter und Held von Mailand 2001.')"><span>Oliver Kahn („Der Titan“)</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Philipp Lahm', 'Weltmeister-Kapitän', 'Vorzeigeprofi aus der eigenen Jugend, führte Bayern zum historischen Triple 2013 und Deutschland zum WM-Titel 2014.')"><span>Philipp Lahm</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Bastian Schweinsteiger', 'Fußballgott', 'Fanliebling, Kämpfernaturell und unvergesslicher Antreiber beim Triple-Gewinn 2013.')"><span>Bastian Schweinsteiger</span><span style="color:var(--bayern-gold)">➔</span></div>
-                    <div class="legend-row" onclick="openLegendModal('Thomas Müller', 'Raumdeuter & Vereinsikone', 'Das Eigengewächs und Sinnbild für Mia san Mia. Rekordtitelträger und unverzichtbare Legende an der Isar.')"><span>Thomas Müller („Raumdeuter“)</span><span style="color:var(--bayern-gold)">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Gerd Müller', 'Der Bomber der Nation', 'Legendärer Rekordtorjäger des FC Bayern. Seine Torquote unerreicht, erzielte 365 Bundesligatore und schoss Deutschland 1974 zum WM-Titel.')"><span>Gerd Müller („Der Bomber“)</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Franz Beckenbauer', 'Der Kaiser', 'Lichtgestalt des deutschen Fußballs. Prägte den FC Bayern als Spieler und Trainer und holte die WM 2006 nach Deutschland.')"><span>Franz Beckenbauer („Der Kaiser“)</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Sepp Maier', 'Die Katze von Anzing', 'Weltmeister-Torhüter und Rekordspieler des FC Bayern mit über 470 Bundesligaspielen in Folge.')"><span>Sepp Maier</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Uli Hoeneß', 'Macher & Präsident', 'Prägte den Verein jahrzehntelang erst als erfolgreicher Spieler und danach als Manager und Präsident an der Weltspitze.')"><span>Uli Hoeneß</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Karl-Heinz Rummenigge', 'Europas Fußballer des Jahres', 'Weltklasse-Stürmer und späterer Vorstandsvorsitzender, der den FC Bayern in die europäische Elite führte.')"><span>Karl-Heinz Rummenigge</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Paul Breitner', 'Weltmeister & Stratege', 'Genialer Kopf im Mittelfeld, 1974 und 1982 Torschütze in WM-Finals und Herzstück der Bayern-Erfolge.')"><span>Paul Breitner</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Lothar Matthäus', 'Weltfußballer & Rekordnationalspieler', 'Absolute Führungsspieler-Legende, Kapitän der Nationalmannschaft und Weltfußballer 1991.')"><span>Lothar Matthäus</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Oliver Kahn', 'Der Titan', 'Kult-Torhüter und Mentalitätsmonster, mehrfacher Welttorhüter und Held von Mailand 2001.')"><span>Oliver Kahn („Der Titan“)</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Philipp Lahm', 'Weltmeister-Kapitän', 'Vorzeigeprofi aus der eigenen Jugend, führte Bayern zum historischen Triple 2013 und Deutschland zum WM-Titel 2014.')"><span>Philipp Lahm</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Bastian Schweinsteiger', 'Fußballgott', 'Fanliebling, Kämpfernaturell und unvergesslicher Antreiber beim Triple-Gewinn 2013.')"><span>Bastian Schweinsteiger</span><span style="color:#ffffff">➔</span></div>
+                    <div class="legend-row" onclick="openLegendModal('Thomas Müller', 'Raumdeuter & Vereinsikone', 'Das Eigengewächs und Sinnbild für Mia san Mia. Rekordtitelträger und unverzichtbare Legende an der Isar.')"><span>Thomas Müller („Raumdeuter“)</span><span style="color:#ffffff">➔</span></div>
                 </div>
             </div>
         </div>
         <div class="dash-card">
-            <div class="dash-card-title"><span>📜 Vereins-Historie</span> <span style="cursor:pointer; color:var(--bayern-gold)" onclick="nextHistorieFakt()">Nächster Fakt</span></div>
+            <div class="dash-card-title"><span>📜 Vereins-Historie</span> <span style="cursor:pointer; color:#ffffff" onclick="nextHistorieFakt()">Nächster Fakt</span></div>
             <div class="dash-card-content" id="historieWidget" style="font-style: italic; margin-bottom: 12px;">"Der FC Bayern München wurde am 27. Februar 1900 in der Gaststätte Gisela in Schwabing gegründet."</div>
             <div style="display: flex; gap: 8px;">
                 <a href="https://fcbayern.com" target="_blank" class="dash-btn-link">🌐 Fcbayern.com</a>
-                <a href="https://fcbayern.com/store" target="_blank" class="dash-btn-link" style="background:#dc052d; color:#ffffff;">🛍️ Fanshop</a>
+                <a href="https://fcbayern.com/store" target="_blank" class="dash-btn-link" style="background:var(--bayern-red); color:#ffffff;">🛍️ Fanshop</a>
             </div>
         </div>
     </div>
@@ -697,13 +696,13 @@
             <div style="display: flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: rgba(35, 134, 54, 0.4); border-radius: 2px; display: inline-block;"></span> Champions League (1. - 4.)</div>
             <div style="display: flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: rgba(51, 133, 255, 0.4); border-radius: 2px; display: inline-block;"></span> Europa League (5.)</div>
             <div style="display: flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: rgba(158, 106, 3, 0.4); border-radius: 2px; display: inline-block;"></span> Conference League (6.)</div>
-            <div style="display: flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: var(--accent-yellow); border-radius: 2px; display: inline-block;"></span> Relegation (16.)</div>
+            <div style="display: flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: rgba(255, 255, 255, 0.25); border-radius: 2px; display: inline-block;"></span> Relegation (16.)</div>
             <div style="display: flex; align-items: center; gap: 5px;"><span style="width: 12px; height: 12px; background: rgba(180, 40, 40, 0.5); border-radius: 2px; display: inline-block;"></span> Abstieg (17. - 18.)</div>
         </div>
 
         <!-- BESUCHER COUNTER -->
         <div class="visitor-counter">
-            👁️ App-Besucher insgesamt: <strong id="visitorCountDisplay">1</strong>
+            👁️ App-Besucher insgesamt: <strong id="visitorCountDisplay">1420</strong>
         </div>
     </div>
 
@@ -729,20 +728,20 @@
             <button class="btn-danger" onclick="closeStaffModal()">✕</button>
         </div>
         <div class="modal-body" style="font-size: 0.9rem; line-height: 1.6;">
-            <div style="margin-bottom: 15px; background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🏥 Ärzte-Team</div>
+            <div style="margin-bottom: 15px; background: #2b161c; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: #ffffff; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🏥 Ärzte-Team</div>
                 <div style="color: var(--text-color);">Prof. Dr. Peter Ueblacker, Dr. Jochen Hahne, Prof. Dr. Roland Schmidt</div>
             </div>
-            <div style="margin-bottom: 15px; background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">💪 Athletik- und Rehatrainer</div>
+            <div style="margin-bottom: 15px; background: #2b161c; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: #ffffff; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">💪 Athletik- und Rehatrainer</div>
                 <div style="color: var(--text-color);">Benjamin Sommer, Simon Martinello, Markus Murrer, Quirin Löppert</div>
             </div>
-            <div style="margin-bottom: 15px; background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🏃‍♂️ Physiotherapeuten</div>
+            <div style="margin-bottom: 15px; background: #2b161c; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: #ffffff; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🏃‍♂️ Physiotherapeuten</div>
                 <div style="color: var(--text-color);">Helmut Erhard (Leiter), Gerry Hoffmann, Christian Huhn, Stephan Weickert</div>
             </div>
-            <div style="background: #1b1622; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                <div style="color: var(--bayern-gold); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">📊 Spiel-Analysten & Management</div>
+            <div style="background: #2b161c; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <div style="color: #ffffff; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">📊 Spiel-Analysten & Management</div>
                 <div style="color: var(--text-color);">Michael Niemeyer, Maciej Jagiellowicz, Samuel Geiler</div>
             </div>
         </div>
@@ -807,7 +806,7 @@
 <div class="modal-overlay" id="legendModal">
     <div class="modal-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-            <div style="font-weight: bold; font-size: 1.1rem; color: var(--bayern-gold);" id="legendModalTitle">Legende</div>
+            <div style="font-weight: bold; font-size: 1.1rem; color: #ffffff;" id="legendModalTitle">Legende</div>
             <button class="btn-danger" onclick="closeLegendModal()">✕</button>
         </div>
         <div class="modal-body" id="legendModalText" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-color);">
@@ -992,7 +991,7 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     table: 'push_subscriptions_bayern',
-                    title: `⚽ BUNDESLIGA TOR! (${hScore}:${aScore})`,
+                    title: `⚽ TOR IN DER BUNDESLIGA! (${hScore}:${aScore})`,
                     body: bodyText
                 })
             });
@@ -1204,7 +1203,7 @@
         if (nextMatch && nextMatch.dateTime) {
             nextMatchDateTime = new Date(nextMatch.dateTime);
             let dt = nextMatch.date ? nextMatch.date.split('-').reverse().join('.') : '';
-            nextWidget.innerHTML = `<strong>ST ${nextMatch.matchday}</strong> — ${dt} ${nextMatch.time || ''}<br><div style="margin-top:4px; font-weight:bold;">${nextMatch.home} vs ${nextMatch.away}</div><div id="matchCountdown" style="margin-top:6px; font-size:0.8rem; color:var(--bayern-gold);"></div>`;
+            nextWidget.innerHTML = `<strong>ST ${nextMatch.matchday}</strong> — ${dt} ${nextMatch.time || ''}<br><div style="margin-top:4px; font-weight:bold;">${nextMatch.home} vs ${nextMatch.away}</div><div id="matchCountdown" style="margin-top:6px; font-size:0.8rem; color:#ffffff;"></div>`;
             updateCountdown();
         } else {
             nextWidget.innerHTML = "Kein anstehendes Spiel gefunden.";
@@ -1228,7 +1227,7 @@
                 let myG = isHome ? m.homeScore : m.awayScore;
                 let oppG = isHome ? m.awayScore : m.homeScore;
                 if (myG > oppG) return '<span style="background:#2ea043; color:#fff; width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; font-weight:bold; font-size:0.8rem;">S</span>';
-                else if (myG === oppG) return '<span style="background:#e3b341; color:#000; width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; font-weight:bold; font-size:0.8rem;">U</span>';
+                else if (myG === oppG) return '<span style="background:#ffffff; color:#0c0809; width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; font-weight:bold; font-size:0.8rem;">U</span>';
                 else return '<span style="background:#f85149; color:#fff; width:26px; height:26px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; font-weight:bold; font-size:0.8rem;">N</span>';
             }).join(' ');
             formWidget.innerHTML = badges;
@@ -1263,7 +1262,7 @@
             let html = '<div style="display:flex; flex-direction:column; gap:4px;">';
             top3.forEach((s, idx) => {
                 let medal = idx === 0 ? '🥇' : (idx === 1 ? '🥈' : '🥉');
-                html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; background:#1b2234; padding:4px 8px; border-radius:4px;"><span>${medal} ${s.name}</span><strong style="color:var(--bayern-gold);">${s.goals} Tore</strong></div>`;
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.85rem; background:#2b161c; padding:4px 8px; border-radius:4px;"><span>${medal} ${s.name}</span><strong style="color:#ffffff;">${s.goals} Tore</strong></div>`;
             });
             html += '</div>';
             topScorersWidget.innerHTML = html;
@@ -1555,7 +1554,7 @@
         document.getElementById('bayernStatsGrid').innerHTML = `
             <div class="stat-card"><div class="stat-label">Spiele</div><div class="stat-value">${played}</div></div>
             <div class="stat-card"><div class="stat-label">Siege</div><div class="stat-value" style="color: #3fb950;">${won}</div></div>
-            <div class="stat-card"><div class="stat-label">Remis</div><div class="stat-value" style="color: #e3b341;">${draw}</div></div>
+            <div class="stat-card"><div class="stat-label">Remis</div><div class="stat-value" style="color: #ffffff;">${draw}</div></div>
             <div class="stat-card"><div class="stat-label">Niederlagen</div><div class="stat-value" style="color: #f85149;">${lost}</div></div>
             <div class="stat-card"><div class="stat-label">Tore</div><div class="stat-value">${goalsFor}:${goalsAgainst}</div></div>
             <div class="stat-card"><div class="stat-label">Punkte</div><div class="stat-value">${points}</div></div>
