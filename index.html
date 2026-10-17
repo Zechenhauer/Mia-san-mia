@@ -976,30 +976,34 @@
         }
     }
 
-    async function triggerGoalPush(home, away, hScore, aScore, scorerText = "") {
-        let goalKey = `${home}_${away}_${hScore}_${aScore}`;
-        if (sentGoalEvents[goalKey]) return;
-        sentGoalEvents[goalKey] = true;
+    async function triggerGoalPush(home, away, hScore, aScore, latestScorer) {
+        let matchKey = `bayern_st_${currentMatchday}_${home}_vs_${away}`;
+        let pushKey = `pushed_${matchKey}_${hScore}_${aScore}`;
+        let alreadyPushed = localStorage.getItem(pushKey) === 'true';
 
-        try {
-            let bodyText = `${home} vs ${away} — Spielstand: ${hScore}:${aScore}`;
-            if (scorerText) bodyText += ` (${scorerText})`;
+        let hasValidScorer = latestScorer && !latestScorer.includes("Tor") && latestScorer.trim() !== "⚽";
 
-            await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
-                method: 'POST',
-                mode: 'cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    table: 'push_subscriptions_bayern',
-                    title: `⚽ TOR IN DER BUNDESLIGA! (${hScore}:${aScore})`,
-                    body: bodyText
-                })
-            });
-        } catch (e) {
-            console.error("Fehler beim Push:", e);
+        if (hasValidScorer && !alreadyPushed) {
+            localStorage.setItem(pushKey, 'true');
+
+            try {
+                let bodyText = `${home} ${hScore} : ${aScore} ${away}\nTorschütze: ${latestScorer}`;
+
+                await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        table: 'push_subscriptions_bayern',
+                        title: "⚽ TOR! (1. Bundesliga)",
+                        body: bodyText
+                    })
+                });
+            } catch (e) {
+                console.error("Fehler beim Push:", e);
+            }
         }
     }
-
     function toggleAdminMode() {
         const adminCard = document.getElementById('adminCard');
         if (isAdmin) {
