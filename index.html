@@ -824,7 +824,6 @@
     const ADMIN_PIN = "1919";
     let isAdmin = false;
 
-    // BESUCHER COUNTER LOGIK
     function initVisitorCounter() {
         let count = parseInt(localStorage.getItem('bayern_app_visitors') || '1420');
         if (!sessionStorage.getItem('visited_session')) {
@@ -835,7 +834,6 @@
         document.getElementById('visitorCountDisplay').textContent = count.toLocaleString('de-DE');
     }
 
-    // SLIDESHOW
     const slides = [
         { url: "https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Teamfoto_bayern.png", name: "Mannschaftsfoto" },
         { url: "https://lhusylpjnujlqomougmg.supabase.co/storage/v1/object/public/vereinslogos/Torhueter.png", name: "Torhüter" },
@@ -898,7 +896,6 @@
     let isInitialized = false;
     let nextMatchDateTime = null;
     let previousEspnScores = {};
-    let sentGoalEvents = {};
 
     const matchdayFridays = {
         1: "2026-08-28", 2: "2026-09-04", 3: "2026-09-11", 4: "2026-09-18", 5: "2026-10-09",
@@ -1004,6 +1001,7 @@
             }
         }
     }
+
     function toggleAdminMode() {
         const adminCard = document.getElementById('adminCard');
         if (isAdmin) {
@@ -1087,8 +1085,19 @@
                     let homeScoreVal = homeComp.score !== undefined && homeComp.score !== "" && statusType !== 'pre' ? parseInt(homeComp.score) : null;
                     let awayScoreVal = awayComp.score !== undefined && awayComp.score !== "" && statusType !== 'pre' ? parseInt(awayComp.score) : null;
                     
+                    // Lokaler Zähler für die exakte Spielstandsanzeige zum Zeitpunkt des jeweiligen Tors
+                    let currentHomeCount = 0;
+                    let currentAwayCount = 0;
+
                     if (comp.details && Array.isArray(comp.details)) {
-                        comp.details.forEach(detail => {
+                        // Nach Spielminute sortieren, damit die Tore chronologisch korrekt hochzählen
+                        let sortedDetails = [...comp.details].sort((a, b) => {
+                            let minA = parseInt(a.clock?.displayValue || '0');
+                            let minB = parseInt(b.clock?.displayValue || '0');
+                            return minA - minB;
+                        });
+
+                        sortedDetails.forEach(detail => {
                             if (detail.type?.text === "Goal" || detail.scoringPlay || detail.goalValue > 0) {
                                 let playerName = detail.scorer?.athlete?.displayName 
                                     || detail.athlete?.displayName 
@@ -1111,12 +1120,20 @@
                                 if (detail.penalty) notes = " (Pen)";
                                 if (detail.ownGoal) notes = " (ET)";
 
-                                let goalEntry = clock ? `${playerName} (${clock}')` + notes : playerName;
+                                let isHomeGoal = (detail.team?.id === homeComp.team.id);
+                                if (isHomeGoal) {
+                                    currentHomeCount++;
+                                } else {
+                                    currentAwayCount++;
+                                }
+
+                                let scoreBracket = `[${currentHomeCount}:${currentAwayCount}] `;
+                                let goalEntry = clock ? `${scoreBracket}${playerName} (${clock}')` + notes : `${scoreBracket}${playerName}`;
                                 latestScorerText = goalEntry;
 
-                                if (detail.team?.id === homeComp.team.id) {
+                                if (isHomeGoal) {
                                     goalsHome.push(`⚽ ${goalEntry}`);
-                                } else if (detail.team?.id === awayComp.team.id) {
+                                } else {
                                     goalsAway.push(`⚽ ${goalEntry}`);
                                 }
                             }
@@ -1175,6 +1192,7 @@
     }
 
     function renderAll() {
+        document.getElementById('matchdayDisplay').textContent = "Spielstand " + currentMatchday; // Unverändert
         document.getElementById('matchdayDisplay').textContent = "Spieltag " + currentMatchday;
         document.getElementById('matchdayTableHeader').textContent = "Spieltag " + currentMatchday + " — Spiele & Ergebnisse";
         
@@ -1222,7 +1240,6 @@
             lastWidget.innerHTML = "Noch kein beendetes Spiel.";
         }
 
-        // --- FORMVERLAUF (Letzte 15 Spiele) ---
         let formWidget = document.getElementById('formCurveWidget');
         if (pastMatches.length > 0) {
             let last15 = pastMatches.slice(-15);
@@ -1239,13 +1256,13 @@
             formWidget.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem;">Noch keine beendeten Spiele</span>';
         }
 
-        // --- TOP 3 TORSCHÜTZEN KACHEL ---
         let bayernScorersMap = {};
         pastMatches.forEach(m => {
             let parseScorers = (gList, teamName) => {
                 if (teamName.includes("Bayern") && Array.isArray(gList)) {
                     gList.forEach(g => {
                         let clean = g.replace('⚽', '').replace('(Pen)', '').replace('(ET)', '').trim();
+                        clean = clean.replace(/\[\d+:\d+\]/, '').trim();
                         let name = clean.split('(')[0].trim();
                         if (name) {
                             bayernScorersMap[name] = (bayernScorersMap[name] || 0) + 1;
@@ -1344,6 +1361,7 @@
                     let parse = (gList, team) => {
                         gList.forEach(g => {
                             let clean = g.replace('⚽', '').replace('(Pen)', '').replace('(ET)', '').trim();
+                            clean = clean.replace(/\[\d+:\d+\]/, '').trim();
                             let name = clean.split('(')[0].trim();
                             if (name) {
                                 if (!scorersMap[name]) scorersMap[name] = { count: 0, team: team };
