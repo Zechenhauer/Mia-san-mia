@@ -575,7 +575,7 @@
         <div class="section-header">
             <span>FC Bayern München — Saison-Auswertung</span>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button class="btn-modal-open" onclick="openStaffModal()" style="background: #3fb950; color: #fff;">🩺 Funktionsteam</button>
+                <button class="btn-modal-open" onclick="openCardsModal()" style="background: #e3b341; color: #0c0809;">🟨 Spieler-Karten</button>
                 <button class="btn-modal-open" onclick="openLeagueScorersModal()" style="background: #ffffff; color: #0c0809;">⚽ Bundesliga-Torschützen</button>
                 <button class="btn-modal-open" onclick="openBayernMatchesModal()">📅 Alle Spiele</button>
             </div>
@@ -602,8 +602,8 @@
             <div class="dash-card-content" id="topScorersWidget">Wird berechnet...</div>
         </div>
         <div class="dash-card">
-            <div class="dash-card-title">🏟️ Heim vs. Auswärts</div>
-            <div class="dash-card-content" id="homeAwayWidget">Heim: 0S - 0U - 0N (0 Pkt)<br>Auswärts: 0S - 0U - 0N (0 Pkt)</div>
+            <div class="dash-card-title">🔥 Form-König (letzte 5 Spiele)</div>
+            <div class="dash-card-content" id="formKingWidget">Wird berechnet...</div>
         </div>
         <div class="dash-card">
             <div class="dash-card-title">⭐ FC Bayern-Legenden (Ruhmeshalle)</div>
@@ -721,31 +721,34 @@
 </div>
 
 <!-- POPUP MODALE -->
-<div class="modal-overlay" id="staffModal">
+<div class="modal-overlay" id="cardsModal">
     <div class="modal-card">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-            <div style="font-weight: bold; font-size: 1.1rem; color: #ffffff;">🩺 Funktionsteam & Betreuerstab</div>
-            <button class="btn-danger" onclick="closeStaffModal()">✕</button>
+            <div style="font-weight: bold; font-size: 1.1rem; color: #ffffff;">🟨🟥 FC Bayern — Spieler-Karten & Sperren</div>
+            <button class="btn-danger" onclick="closeCardsModal()">✕</button>
         </div>
-        <div class="modal-body" style="font-size: 0.9rem; line-height: 1.6;">
-            <div style="margin-bottom: 15px; background: #2b161c; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                <div style="color: #ffffff; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🏥 Ärzte-Team</div>
-                <div style="color: var(--text-color);">Prof. Dr. Peter Ueblacker, Dr. Jochen Hahne, Prof. Dr. Roland Schmidt</div>
+        <div class="modal-body">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Spieler</th>
+                            <th style="text-align: center; width: 60px;">🟨 Gelb</th>
+                            <th style="text-align: center; width: 70px;">🟨🟥 Gelb-Rot</th>
+                            <th style="text-align: center; width: 60px;">🟥 Rot</th>
+                            <th style="text-align: center; width: 100px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cardsModalBody">
+                        <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Lade Kartenstatistik...</td></tr>
+                    </tbody>
+                </table>
             </div>
-            <div style="margin-bottom: 15px; background: #2b161c; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                <div style="color: #ffffff; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">💪 Athletik- und Rehatrainer</div>
-                <div style="color: var(--text-color);">Benjamin Sommer, Simon Martinello, Markus Murrer, Quirin Löppert</div>
-            </div>
-            <div style="margin-bottom: 15px; background: #2b161c; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                <div style="color: #ffffff; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">🏃‍♂️ Physiotherapeuten</div>
-                <div style="color: var(--text-color);">Helmut Erhard (Leiter), Gerry Hoffmann, Christian Huhn, Stephan Weickert</div>
-            </div>
-            <div style="background: #2b161c; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                <div style="color: #ffffff; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; font-size: 0.8rem;">📊 Spiel-Analysten & Management</div>
-                <div style="color: var(--text-color);">Michael Niemeyer, Maciej Jagiellowicz, Samuel Geiler</div>
+            <div style="margin-top: 15px; font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;">
+                Hinweis: Nach jeweils 5 Gelben Karten greift eine automatische 1-Spiele-Sperre (der Zähler beginnt danach wieder bei 0). Gelb-Rote und Rote Karten führen ebenfalls zu Sperren.
             </div>
         </div>
-        <button class="btn" style="margin-top: 15px;" onclick="closeStaffModal()">Schließen</button>
+        <button class="btn" style="margin-top: 15px;" onclick="closeCardsModal()">Schließen</button>
     </div>
 </div>
 
@@ -1074,6 +1077,8 @@
                     const isLive = statusType === 'in';
                     if (isLive) hasLive = true;
 
+                    let displayClock = ev.status?.displayClock || "";
+
                     let matchDateObj = new Date(ev.date);
                     let dateStr = ev.date ? ev.date.split('T')[0] : fri;
                     let timeStr = !isNaN(matchDateObj.getTime()) ? matchDateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : "15:30";
@@ -1085,12 +1090,10 @@
                     let homeScoreVal = homeComp.score !== undefined && homeComp.score !== "" && statusType !== 'pre' ? parseInt(homeComp.score) : null;
                     let awayScoreVal = awayComp.score !== undefined && awayComp.score !== "" && statusType !== 'pre' ? parseInt(awayComp.score) : null;
                     
-                    // Lokaler Zähler für die exakte Spielstandsanzeige zum Zeitpunkt des jeweiligen Tors
                     let currentHomeCount = 0;
                     let currentAwayCount = 0;
 
                     if (comp.details && Array.isArray(comp.details)) {
-                        // Nach Spielminute sortieren, damit die Tore chronologisch korrekt hochzählen
                         let sortedDetails = [...comp.details].sort((a, b) => {
                             let minA = parseInt(a.clock?.displayValue || '0');
                             let minB = parseInt(b.clock?.displayValue || '0');
@@ -1098,24 +1101,28 @@
                         });
 
                         sortedDetails.forEach(detail => {
-                            if (detail.type?.text === "Goal" || detail.scoringPlay || detail.goalValue > 0) {
-                                let playerName = detail.scorer?.athlete?.displayName 
-                                    || detail.athlete?.displayName 
-                                    || (detail.athletesInvolved && detail.athletesInvolved[0]?.displayName)
-                                    || "";
+                            let typeText = (detail.type && detail.type.text) ? detail.type.text.toLowerCase() : "";
+                            let playerName = detail.scorer?.athlete?.displayName 
+                                || detail.athlete?.displayName 
+                                || detail.player?.displayName
+                                || (detail.athletesInvolved && detail.athletesInvolved[0]?.displayName)
+                                || "";
 
-                                if (!playerName && detail.text) {
-                                    let cleanText = detail.text.replace(/scored.*\$/, '').trim();
-                                    if (cleanText && cleanText.toLowerCase() !== 'goal') {
-                                        playerName = cleanText;
-                                    }
+                            if (!playerName && detail.text) {
+                                let cleanText = detail.text.replace(/scored.*\$/, '').trim();
+                                if (cleanText && cleanText.toLowerCase() !== 'goal') {
+                                    playerName = cleanText;
                                 }
+                            }
 
-                                if (!playerName) {
-                                    playerName = detail.team?.displayName || "Tor";
-                                }
+                            if (!playerName) {
+                                playerName = detail.team?.displayName || "Aktion";
+                            }
 
-                                let clock = detail.clock?.displayValue || "";
+                            let clock = detail.clock?.displayValue || "";
+                            let minuteStr = clock ? ` (${clock}')` : '';
+
+                            if (detail.type?.text === "Goal" || detail.scoringPlay || detail.goalValue > 0 || typeText.includes("goal")) {
                                 let notes = "";
                                 if (detail.penalty) notes = " (Pen)";
                                 if (detail.ownGoal) notes = " (ET)";
@@ -1136,6 +1143,18 @@
                                 } else {
                                     goalsAway.push(`⚽ ${goalEntry}`);
                                 }
+                            } else if (typeText.includes("yellow-red") || typeText.includes("gelb-rot")) {
+                                let cardEntry = `🟨🟥 ${playerName}${minuteStr}`;
+                                if (detail.team?.id === homeComp.team.id) goalsHome.push(cardEntry);
+                                else if (detail.team?.id === awayComp.team.id) goalsAway.push(cardEntry);
+                            } else if (typeText.includes("yellow") || typeText.includes("gelbe karte")) {
+                                let cardEntry = `🟨 ${playerName}${minuteStr}`;
+                                if (detail.team?.id === homeComp.team.id) goalsHome.push(cardEntry);
+                                else if (detail.team?.id === awayComp.team.id) goalsAway.push(cardEntry);
+                            } else if (typeText.includes("red") || typeText.includes("rote karte")) {
+                                let cardEntry = `🟥 ${playerName}${minuteStr}`;
+                                if (detail.team?.id === homeComp.team.id) goalsHome.push(cardEntry);
+                                else if (detail.team?.id === awayComp.team.id) goalsAway.push(cardEntry);
                             }
                         });
                     }
@@ -1160,6 +1179,7 @@
                         awayScore: awayScoreVal,
                         isFinished: statusType === 'post',
                         isLive: isLive,
+                        displayClock: displayClock,
                         dateTime: ev.date,
                         goalsHome: goalsHome,
                         goalsAway: goalsAway
@@ -1192,7 +1212,6 @@
     }
 
     function renderAll() {
-        document.getElementById('matchdayDisplay').textContent = "Spielstand " + currentMatchday; // Unverändert
         document.getElementById('matchdayDisplay').textContent = "Spieltag " + currentMatchday;
         document.getElementById('matchdayTableHeader').textContent = "Spieltag " + currentMatchday + " — Spiele & Ergebnisse";
         
@@ -1261,11 +1280,13 @@
             let parseScorers = (gList, teamName) => {
                 if (teamName.includes("Bayern") && Array.isArray(gList)) {
                     gList.forEach(g => {
-                        let clean = g.replace('⚽', '').replace('(Pen)', '').replace('(ET)', '').trim();
-                        clean = clean.replace(/\[\d+:\d+\]/, '').trim();
-                        let name = clean.split('(')[0].trim();
-                        if (name) {
-                            bayernScorersMap[name] = (bayernScorersMap[name] || 0) + 1;
+                        if (g.startsWith('⚽')) {
+                            let clean = g.replace('⚽', '').replace('(Pen)', '').replace('(ET)', '').trim();
+                            clean = clean.replace(/\[\d+:\d+\]/, '').trim();
+                            let name = clean.split('(')[0].trim();
+                            if (name) {
+                                bayernScorersMap[name] = (bayernScorersMap[name] || 0) + 1;
+                            }
                         }
                     });
                 }
@@ -1291,19 +1312,93 @@
             topScorersWidget.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem;">Noch keine Torschützen erfasst</span>';
         }
 
-        let homeW = {p:0, s:0, u:0, n:0, pts:0};
-        let awayW = {p:0, s:0, u:0, n:0, pts:0};
-        pastMatches.forEach(m => {
-            let isHome = m.home.includes("Bayern");
-            let myG = isHome ? m.homeScore : m.awayScore;
-            let oppG = isHome ? m.awayScore : m.homeScore;
-            let obj = isHome ? homeW : awayW;
-            obj.p++;
-            if (myG > oppG) { obj.s++; obj.pts += 3; }
-            else if (myG === oppG) { obj.u++; obj.pts += 1; }
-            else { obj.n++; }
+        // --- BERECHNUNG DES FORM-KÖNIGS (LETZTE 5 SPIELE) ---
+        let allTeamsStats = {};
+        let allTeamsList = [];
+        Object.values(leagueMatches).forEach(matchList => {
+            if (Array.isArray(matchList)) {
+                matchList.forEach(m => {
+                    if (!allTeamsList.includes(m.home)) allTeamsList.push(m.home);
+                    if (!allTeamsList.includes(m.away)) allTeamsList.push(m.away);
+                });
+            }
         });
-        document.getElementById('homeAwayWidget').innerHTML = `Heim: ${homeW.s}S - ${homeW.u}U - ${homeW.n}N (${homeW.pts} Pkt)<br>Auswärts: ${awayW.s}S - ${awayW.u}U - ${awayW.n}N (${awayW.pts} Pkt)`;
+
+        allTeamsList.forEach(t => { allTeamsStats[t] = { name: t, matches: [] }; });
+
+        Object.values(leagueMatches).forEach(matchList => {
+            if (!Array.isArray(matchList)) return;
+            matchList.forEach(m => {
+                if (m.homeScore === null || m.homeScore === undefined || m.awayScore === null || m.awayScore === undefined) return;
+                let h = m.home, a = m.away;
+                if (!allTeamsStats[h] || !allTeamsStats[a]) return;
+
+                let hG = m.homeScore, aG = m.awayScore;
+                
+                let hRes = hG > aG ? 'S' : (hG === aG ? 'U' : 'N');
+                let hPts = hG > aG ? 3 : (hG === aG ? 1 : 0);
+                allTeamsStats[h].matches.push({ date: m.dateTime || m.date, pts: hPts, gf: hG, ga: aG, res: hRes });
+
+                let aRes = aG > hG ? 'S' : (aG === hG ? 'U' : 'N');
+                let aPts = aG > hG ? 3 : (aG === hG ? 1 : 0);
+                allTeamsStats[a].matches.push({ date: m.dateTime || m.date, pts: aPts, gf: aG, ga: hG, res: aRes });
+            });
+        });
+
+        let bestTeam = null;
+        let maxPtsL5 = -1;
+        let bestToreL5 = "0:0";
+        let bestSerieStr = "";
+
+        Object.values(allTeamsStats).forEach(team => {
+            team.matches.sort((x, y) => new Date(y.date || 0) - new Date(x.date || 0));
+            let last5 = team.matches.slice(0, 5);
+            if (last5.length === 0) return;
+
+            let ptsSum = last5.reduce((acc, cur) => acc + cur.pts, 0);
+            let gfSum = last5.reduce((acc, cur) => acc + cur.gf, 0);
+            let gaSum = last5.reduce((acc, cur) => acc + cur.ga, 0);
+            let toreStr = `${gfSum}:${gaSum}`;
+            let serieStr = last5.slice().reverse().map(c => c.res).join('');
+
+            if (ptsSum > maxPtsL5) {
+                maxPtsL5 = ptsSum;
+                bestTeam = team.name;
+                bestToreL5 = toreStr;
+                bestSerieStr = serieStr;
+            }
+        });
+
+        let formKingWidget = document.getElementById('formKingWidget');
+        if (bestTeam) {
+            let logoUrl = teamLogos[bestTeam.trim().toLowerCase()] || "";
+            let logoHtml = logoUrl ? `<img src="${logoUrl}" alt="${bestTeam}" style="width: 22px; height: 22px; object-fit: contain; vertical-align: middle; margin-right: 6px;">` : '';
+            
+            let coloredSerie = bestSerieStr.split('').map(char => {
+                let color = char === 'S' ? '#3fb950' : (char === 'U' ? '#e3b341' : '#f85149');
+                return `<span style="color: ${color}; font-weight: bold;">${char}</span>`;
+            }).join('');
+
+            formKingWidget.innerHTML = `
+                <div style="display: flex; align-items: center; font-weight: bold; font-size: 1rem; color: #ffffff; margin-bottom: 8px;">
+                    ${logoHtml}<span>${bestTeam}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                    <span style="color: var(--text-muted);">Punkte (L5):</span>
+                    <strong style="color: #3fb950;">${maxPtsL5} Pkt</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                    <span style="color: var(--text-muted);">Tore (L5):</span>
+                    <strong style="color: #e3b341;">${bestToreL5}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                    <span style="color: var(--text-muted);">Serie:</span>
+                    <div style="letter-spacing: 2px;">${coloredSerie}</div>
+                </div>
+            `;
+        } else {
+            formKingWidget.innerHTML = '<span style="color: var(--text-muted); font-size: 0.85rem;">Noch keine Spieldaten verfügbar</span>';
+        }
     }
 
     function updateCountdown() {
@@ -1345,8 +1440,102 @@
         }
     }
 
-    function openStaffModal() { document.getElementById('staffModal').style.display = 'flex'; }
-    function closeStaffModal() { document.getElementById('staffModal').style.display = 'none'; }
+    // --- KARTEN & SPERREN MODAL LOGIK ---
+    function openCardsModal() {
+        let tbody = document.getElementById('cardsModalBody');
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Berechne Karten und Sperren...</td></tr>`;
+        document.getElementById('cardsModal').style.display = 'flex';
+
+        let playerStats = {};
+
+        let pastBayernMatches = [];
+        for (let mDay in leagueMatches) {
+            let list = leagueMatches[mDay];
+            if (Array.isArray(list)) {
+                list.forEach(m => {
+                    if (m.home.includes("Bayern") || m.away.includes("Bayern")) {
+                        if (m.homeScore !== null && m.homeScore !== undefined) {
+                            pastBayernMatches.push(m);
+                        }
+                    }
+                });
+            }
+        }
+
+        // Wir prüfen alle Tore/Aktionen in den Bayern-Spielen nach Karten (🟨, 🟨🟥, 🟥)
+        // Hinweis: Da die Spieldetails im Match-Objekt gespeichert sind, scannen wir goalsHome/goalsAway bzw. müssten die Rohdetails heranziehen.
+        // Perfekter Weg: Wir sammeln alle Karten direkt aus den erfassten Toren/Karten-Arrays (goalsHome/goalsAway enthalten bereits Emojis 🟨, 🟨🟥, 🟥).
+        pastBayernMatches.forEach(m => {
+            let scanCards = (gList, teamName) => {
+                if (teamName.includes("Bayern") && Array.isArray(gList)) {
+                    gList.forEach(entry => {
+                        let text = entry;
+                        let playerName = "";
+                        let isYellow = text.includes('🟨') && !text.includes('🟥');
+                        let isYellowRed = text.includes('🟨🟥');
+                        let isRed = text.includes('🟥') && !text.includes('🟨');
+
+                        if (isYellow || isYellowRed || isRed) {
+                            // Namen extrahieren (nach Emoji bis Klammer oder Ende)
+                            let clean = text.replace(/^[⚽🟨🟥\s]+/, '').trim();
+                            clean = clean.replace(/\[\d+:\d+\]/, '').trim();
+                            playerName = clean.split('(')[0].trim();
+
+                            if (playerName) {
+                                if (!playerStats[playerName]) {
+                                    playerStats[playerName] = { yellow: 0, yellowRed: 0, red: 0, totalYellowEver: 0 };
+                                }
+                                if (isYellow) {
+                                    playerStats[playerName].yellow++;
+                                    playerStats[playerName].totalYellowEver++;
+                                } else if (isYellowRed) {
+                                    playerStats[playerName].yellowRed++;
+                                } else if (isRed) {
+                                    playerStats[playerName].red++;
+                                }
+                            }
+                        }
+                    });
+                }
+            };
+            scanCards(m.goalsHome, m.home);
+            scanCards(m.goalsAway, m.away);
+        });
+
+        tbody.innerHTML = '';
+        let players = Object.keys(playerStats);
+
+        if (players.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Bisher keine Karten in beendeten Spielen erfasst.</td></tr>`;
+        } else {
+            players.sort((a, b) => (playerStats[b].totalYellowEver + playerStats[b].red * 2) - (playerStats[a].totalYellowEver + playerStats[a].red * 2));
+
+            players.forEach(pName => {
+                let stats = playerStats[pName];
+                // Nach 5 Gelben Karten greift Sperre, Zähler fängt wieder von 0 an (Modulo 5 für aktuelle Gelbe)
+                let currentYellows = stats.totalYellowEver % 5;
+                let activeSuspensions = Math.floor(stats.totalYellowEver / 5);
+
+                let statusHtml = '<span style="color: #3fb950; font-weight: bold;">Spielbereit</span>';
+                if (stats.red > 0 || stats.yellowRed > 0 || activeSuspensions > 0) {
+                    statusHtml = '<span style="color: #f85149; font-weight: bold;">Gesperrt ❌</span>';
+                } else if (currentYellows === 4) {
+                    statusHtml = '<span style="color: #e3b341; font-weight: bold;">Gefährdet (4) ⚠️</span>';
+                }
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: bold; color: #ffffff;">${pName}</td>
+                    <td style="text-align: center; color: #e3b341; font-weight: bold;">${currentYellows} ${stats.totalYellowEver >= 5 ? '<span style="font-size:0.65rem; color:var(--text-muted)">(ges. ' + stats.totalYellowEver + ')</span>' : ''}</td>
+                    <td style="text-align: center; color: #f85149; font-weight: bold;">${stats.yellowRed}</td>
+                    <td style="text-align: center; color: #f85149; font-weight: bold;">${stats.red}</td>
+                    <td style="text-align: center;">${statusHtml}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    }
+    function closeCardsModal() { document.getElementById('cardsModal').style.display = 'none'; }
 
     async function openLeagueScorersModal() {
         let tbody = document.getElementById('leagueScorersModalBody');
@@ -1360,12 +1549,14 @@
                 list.forEach(m => {
                     let parse = (gList, team) => {
                         gList.forEach(g => {
-                            let clean = g.replace('⚽', '').replace('(Pen)', '').replace('(ET)', '').trim();
-                            clean = clean.replace(/\[\d+:\d+\]/, '').trim();
-                            let name = clean.split('(')[0].trim();
-                            if (name) {
-                                if (!scorersMap[name]) scorersMap[name] = { count: 0, team: team };
-                                scorersMap[name].count++;
+                            if (g.startsWith('⚽')) {
+                                let clean = g.replace('⚽', '').replace('(Pen)', '').replace('(ET)', '').trim();
+                                clean = clean.replace(/\[\d+:\d+\]/, '').trim();
+                                let name = clean.split('(')[0].trim();
+                                if (name) {
+                                    if (!scorersMap[name]) scorersMap[name] = { count: 0, team: team };
+                                    scorersMap[name].count++;
+                                }
                             }
                         });
                     };
@@ -1478,7 +1669,8 @@
 
             let resultDisplay = hasResult ? '<strong>' + m.homeScore + ':' + m.awayScore + '</strong>' : '<span style="color: var(--text-muted); font-style: italic;">vs</span>';
             if (m.isLive) {
-                resultDisplay += '<div style="font-size: 0.65rem; color: #f85149; font-weight: bold; margin-top: 2px; text-align: center;">🔴 LIVE</div>';
+                let clockText = m.displayClock ? ` (${m.displayClock}')` : '';
+                resultDisplay += `<div style="font-size: 0.65rem; color: #f85149; font-weight: bold; margin-top: 2px; text-align: center;">🔴 LIVE${clockText}</div>`;
             } else if (m.isFinished) {
                 resultDisplay += '<div style="font-size: 0.65rem; color: #3fb950; margin-top: 2px; text-align: center;">(Endstand)</div>';
             }
@@ -1585,7 +1777,7 @@
 
     window.onclick = function(e) {
         if (e.target === document.getElementById('bayernMatchesModal')) closeBayernMatchesModal();
-        if (e.target === document.getElementById('staffModal')) closeStaffModal();
+        if (e.target === document.getElementById('cardsModal')) closeCardsModal();
         if (e.target === document.getElementById('leagueScorersModal')) closeLeagueScorersModal();
         if (e.target === document.getElementById('legendModal')) closeLegendModal();
     }
