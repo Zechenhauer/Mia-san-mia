@@ -976,32 +976,41 @@
         }
     }
 
-    async function triggerGoalPush(home, away, hScore, aScore, latestScorer) {
-        let matchKey = `bayern_st_${currentMatchday}_${home}_vs_${away}`;
-        let pushKey = `pushed_${matchKey}_${hScore}_${aScore}`;
-        let alreadyPushed = localStorage.getItem(pushKey) === 'true';
+    async function triggerGoalPush(home, away, hScore, aScore, latestScorer, matchId) {
+        if (!latestScorer || latestScorer.includes("Tor") || latestScorer.trim() === "⚽") return;
 
-        let hasValidScorer = latestScorer && !latestScorer.includes("Tor") && latestScorer.trim() !== "⚽";
+        // Eindeutige ID für dieses spezifische Tor via Supabase Cache Tabelle sent_goals_bl
+        let uniqueGoalId = `${matchId}_${latestScorer}_${hScore}_${aScore}`;
 
-        if (hasValidScorer && !alreadyPushed) {
-            localStorage.setItem(pushKey, 'true');
+        try {
+            let { data: existing, error: checkError } = await supabaseClient
+                .from('sent_goals_bl')
+                .select('goal_id')
+                .eq('goal_id', uniqueGoalId)
+                .maybeSingle();
 
-            try {
-                let bodyText = `${home} ${hScore} : ${aScore} ${away}\nTorschütze: ${latestScorer}`;
+            if (!existing && !checkError) {
+                let { error: insertError } = await supabaseClient
+                    .from('sent_goals_bl')
+                    .insert([{ goal_id: uniqueGoalId }]);
 
-                await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        table: 'push_subscriptions_bayern',
-                        title: "⚽ TOR! (1. Bundesliga)",
-                        body: bodyText
-                    })
-                });
-            } catch (e) {
-                console.error("Fehler beim Push:", e);
+                if (!insertError) {
+                    let bodyText = `${home} ${hScore} : ${aScore} ${away}\nTorschütze: ${latestScorer}`;
+
+                    await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
+                        method: 'POST',
+                        mode: 'cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            table: 'push_subscriptions_bayern',
+                            title: "⚽ TOR! (1. Bundesliga)",
+                            body: bodyText
+                        })
+                    });
+                }
             }
+        } catch (e) {
+            console.error("Fehler beim globalen Bundesliga-Tor-Cache:", e);
         }
     }
 
@@ -1164,7 +1173,7 @@
                         let prev = previousEspnScores[matchId];
                         if (prev !== undefined && isLive) {
                             if (homeScoreVal > prev.home || awayScoreVal > prev.away) {
-                                triggerGoalPush(homeComp.team.displayName, awayComp.team.displayName, homeScoreVal, awayScoreVal, latestScorerText);
+                                triggerGoalPush(homeComp.team.displayName, awayComp.team.displayName, homeScoreVal, awayScoreVal, latestScorerText, matchId);
                             }
                         }
                         previousEspnScores[matchId] = { home: homeScoreVal, away: awayScoreVal };
@@ -1312,7 +1321,6 @@
             topScorersWidget.innerHTML = '<span style="color:var(--text-muted); font-size:0.85rem;">Noch keine Torschützen erfasst</span>';
         }
 
-        // --- BERECHNUNG DES FORM-KÖNIGS (LETZTE 5 SPIELE) ---
         let allTeamsStats = {};
         let allTeamsList = [];
         Object.values(leagueMatches).forEach(matchList => {
@@ -1440,7 +1448,6 @@
         }
     }
 
-    // --- KARTEN & SPERREN MODAL LOGIK ---
     function openCardsModal() {
         let tbody = document.getElementById('cardsModalBody');
         tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">Berechne Karten und Sperren...</td></tr>`;
@@ -1462,9 +1469,6 @@
             }
         }
 
-        // Wir prüfen alle Tore/Aktionen in den Bayern-Spielen nach Karten (🟨, 🟨🟥, 🟥)
-        // Hinweis: Da die Spieldetails im Match-Objekt gespeichert sind, scannen wir goalsHome/goalsAway bzw. müssten die Rohdetails heranziehen.
-        // Perfekter Weg: Wir sammeln alle Karten direkt aus den erfassten Toren/Karten-Arrays (goalsHome/goalsAway enthalten bereits Emojis 🟨, 🟨🟥, 🟥).
         pastBayernMatches.forEach(m => {
             let scanCards = (gList, teamName) => {
                 if (teamName.includes("Bayern") && Array.isArray(gList)) {
@@ -1476,7 +1480,6 @@
                         let isRed = text.includes('🟥') && !text.includes('🟨');
 
                         if (isYellow || isYellowRed || isRed) {
-                            // Namen extrahieren (nach Emoji bis Klammer oder Ende)
                             let clean = text.replace(/^[⚽🟨🟥\s]+/, '').trim();
                             clean = clean.replace(/\[\d+:\d+\]/, '').trim();
                             playerName = clean.split('(')[0].trim();
@@ -1512,7 +1515,6 @@
 
             players.forEach(pName => {
                 let stats = playerStats[pName];
-                // Nach 5 Gelben Karten greift Sperre, Zähler fängt wieder von 0 an (Modulo 5 für aktuelle Gelbe)
                 let currentYellows = stats.totalYellowEver % 5;
                 let activeSuspensions = Math.floor(stats.totalYellowEver / 5);
 
