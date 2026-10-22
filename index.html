@@ -48,6 +48,63 @@
             box-shadow: 0 4px 20px rgba(220, 5, 45, 0.2);
         }
 
+        /* NEU: LAUFBAND / TICKER STYLES */
+        .ticker-wrapper {
+            width: 100%;
+            background: #000000;
+            border: 1px solid var(--bayern-red);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            height: 36px;
+            position: relative;
+        }
+        .ticker-label {
+            background: var(--bayern-red);
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 0 10px;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            z-index: 2;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .ticker-content-box {
+            overflow: hidden;
+            white-space: nowrap;
+            flex: 1;
+            position: relative;
+        }
+        .ticker-track {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker-scroll 40s linear infinite;
+            font-size: 0.85rem;
+            color: #ffffff;
+            font-weight: 500;
+        }
+        .ticker-track:hover {
+            animation-play-state: paused;
+        }
+        .ticker-item {
+            display: inline-block;
+            padding: 0 30px;
+        }
+        .ticker-item span {
+            color: var(--bayern-bright-red);
+            font-weight: bold;
+            margin-left: 6px;
+        }
+        @keyframes ticker-scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
         .banner-wrapper {
             width: 100%;
             display: flex;
@@ -548,6 +605,16 @@
 <body>
 
 <div class="container">
+    <!-- NEU: LAUFBAND / LIVE-TICKER OBEN -->
+    <div class="ticker-wrapper">
+        <div class="ticker-label">⚽ Ticker</div>
+        <div class="ticker-content-box">
+            <div class="ticker-track" id="tickerTrack">
+                <span class="ticker-item">Lade aktuelle Spielstände und Tore...</span>
+            </div>
+        </div>
+    </div>
+
     <!-- SLIDESHOW OBEN -->
     <div class="banner-wrapper">
         <div class="slideshow-container">
@@ -896,7 +963,6 @@
     let teamLogos = {};
     let leagueMatches = {};
 
-    // Exakte Matchday-Tabelle aus deinem Original-Code beibehalten
     const matchdayFridays = {
         1: "2026-08-28", 2: "2026-09-04", 3: "2026-09-11", 4: "2026-09-18", 5: "2026-10-09",
         6: "2026-10-16", 7: "2026-10-23", 8: "2026-10-30", 9: "2026-11-06", 10: "2026-11-20",
@@ -907,7 +973,6 @@
         31: "2027-04-23", 32: "2027-05-07", 33: "2027-05-14", 34: "2027-05-22"
     };
 
-    // Automatische Ermittlung des aktuellen Spieltags anhand des heutigen Datums
     function determineCurrentMatchday() {
         let today = new Date().toISOString().split('T')[0];
         let closestMatchday = 6;
@@ -1241,11 +1306,34 @@
         }
 
         renderAll();
+        updateTicker();
+    }
+
+    // NEU: LAUFBAND / TICKER AKTUALISIEREN
+    function updateTicker() {
+        let tickerItems = [];
+        let matches = leagueMatches[currentMatchday] || [];
+        
+        matches.forEach(m => {
+            let score = (m.homeScore !== null && m.homeScore !== undefined) ? `${m.homeScore}:${m.awayScore}` : 'vs';
+            let status = m.isLive ? '🔴 LIVE' : (m.isFinished ? 'Endstand' : m.time || '');
+            tickerItems.push(`<span class="ticker-item">${m.home} - ${m.away} <span>${score}</span> (${status})</span>`);
+        });
+
+        const tickerTrack = document.getElementById('tickerTrack');
+        if (tickerTrack) {
+            if (tickerItems.length > 0) {
+                tickerTrack.innerHTML = tickerItems.join('');
+            } else {
+                tickerTrack.innerHTML = `<span class="ticker-item">Keine Live-Spiele am aktuellen Spieltag verfügbar.</span>`;
+            }
+        }
     }
 
     function changeMatchday(amount) {
         currentMatchday = Math.max(1, Math.min(34, currentMatchday + amount));
         renderAll();
+        updateTicker();
     }
 
     function renderAll() {
