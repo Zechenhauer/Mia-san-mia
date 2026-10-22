@@ -636,7 +636,7 @@
     <!-- SPIELTAGS-TABELLE -->
     <div class="section-box">
         <div class="section-header">
-            <span id="matchdayTableHeader">Spieltag 6 — Spiele & Ergebnisse</span>
+            <span id="matchdayTableHeader">Spieltag — Spiele & Ergebnisse</span>
             <div class="header-actions">
                 <button class="header-action-btn" onclick="requestPushPermission()">🔔 Push-Alarm</button>
                 <button class="header-action-btn" onclick="loadEspnMatchdayData(true)">🔄 Aktualisieren & Live</button>
@@ -644,7 +644,7 @@
         </div>
         <div class="matchday-controls">
             <button class="matchday-btn" onclick="changeMatchday(-1)">◀ Vorheriger Spieltag</button>
-            <strong id="matchdayDisplay" style="color: var(--bayern-bright-red); font-size: 1.1rem;">Spieltag 6</strong>
+            <strong id="matchdayDisplay" style="color: var(--bayern-bright-red); font-size: 1.1rem;">Spieltag</strong>
             <button class="matchday-btn" onclick="changeMatchday(1)">Nächster Spieltag ▶</button>
         </div>
         <div class="table-container">
@@ -895,11 +895,8 @@
 
     let teamLogos = {};
     let leagueMatches = {};
-    let currentMatchday = 6; 
-    let isInitialized = false;
-    let nextMatchDateTime = null;
-    let previousEspnScores = {};
 
+    // Exakte Matchday-Tabelle aus deinem Original-Code beibehalten
     const matchdayFridays = {
         1: "2026-08-28", 2: "2026-09-04", 3: "2026-09-11", 4: "2026-09-18", 5: "2026-10-09",
         6: "2026-10-16", 7: "2026-10-23", 8: "2026-10-30", 9: "2026-11-06", 10: "2026-11-20",
@@ -909,6 +906,38 @@
         26: "2027-03-12", 27: "2027-03-19", 28: "2027-04-02", 29: "2027-04-09", 30: "2027-04-16",
         31: "2027-04-23", 32: "2027-05-07", 33: "2027-05-14", 34: "2027-05-22"
     };
+
+    // Automatische Ermittlung des aktuellen Spieltags anhand des heutigen Datums
+    function determineCurrentMatchday() {
+        let today = new Date().toISOString().split('T')[0];
+        let closestMatchday = 6;
+        let minDiff = Infinity;
+
+        for (let s = 1; s <= 34; s++) {
+            let friStr = matchdayFridays[s];
+            if (!friStr) continue;
+            let friDate = new Date(friStr);
+            let todayDate = new Date(today);
+            let diff = Math.abs(todayDate - friDate);
+
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestMatchday = s;
+            }
+            if (today >= friStr) {
+                let nextFriDate = matchdayFridays[s + 1] ? new Date(matchdayFridays[s + 1]) : new Date('2027-06-01');
+                if (todayDate < nextFriDate) {
+                    return s;
+                }
+            }
+        }
+        return closestMatchday;
+    }
+
+    let currentMatchday = determineCurrentMatchday();
+    let isInitialized = false;
+    let nextMatchDateTime = null;
+    let previousEspnScores = {};
 
     function urlBase64ToUint8Array(base64String) {
         const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -965,8 +994,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     table: 'push_subscriptions_bayern',
-                    title: "⚽ Bundesliga Test-Tor-Alarm",
-                    body: "Das Test-Tor wurde erfolgreich für alle Live-Spiele ausgelöst!"
+                    title: "⚽ Test-Team — Tor! (1:0)",
+                    body: "Torschütze: Test-Spieler (15')\nBegegnung: Test-Team vs. Gegner (1:0)"
                 })
             });
             if (response.ok) alert("Test-Push erfolgreich ausgelöst!");
@@ -976,10 +1005,9 @@
         }
     }
 
-    async function triggerGoalPush(home, away, hScore, aScore, latestScorer, matchId) {
+    async function triggerGoalPush(home, away, hScore, aScore, latestScorer, matchId, scoringTeamName) {
         if (!latestScorer || latestScorer.includes("Tor") || latestScorer.trim() === "⚽") return;
 
-        // Eindeutige ID für dieses spezifische Tor via Supabase Cache Tabelle sent_goals_bl
         let uniqueGoalId = `${matchId}_${latestScorer}_${hScore}_${aScore}`;
 
         try {
@@ -995,16 +1023,14 @@
                     .insert([{ goal_id: uniqueGoalId }]);
 
                 if (!insertError) {
-                    let bodyText = `${home} ${hScore} : ${aScore} ${away}\nTorschütze: ${latestScorer}`;
-
                     await fetch(`${SUPABASE_URL}/functions/v1/send-push`, {
                         method: 'POST',
                         mode: 'cors',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             table: 'push_subscriptions_bayern',
-                            title: "⚽ TOR! (1. Bundesliga)",
-                            body: bodyText
+                            title: `⚽ ${scoringTeamName} — Tor! (${hScore}:${aScore})`,
+                            body: `Torschütze: ${latestScorer}\nBegegnung: ${home} vs ${away} (${hScore}:${aScore})`
                         })
                     });
                 }
@@ -1095,6 +1121,7 @@
                     let goalsHome = [];
                     let goalsAway = [];
                     let latestScorerText = "";
+                    let scoringTeamName = "";
 
                     let homeScoreVal = homeComp.score !== undefined && homeComp.score !== "" && statusType !== 'pre' ? parseInt(homeComp.score) : null;
                     let awayScoreVal = awayComp.score !== undefined && awayComp.score !== "" && statusType !== 'pre' ? parseInt(awayComp.score) : null;
@@ -1146,6 +1173,7 @@
                                 let scoreBracket = `[${currentHomeCount}:${currentAwayCount}] `;
                                 let goalEntry = clock ? `${scoreBracket}${playerName} (${clock}')` + notes : `${scoreBracket}${playerName}`;
                                 latestScorerText = goalEntry;
+                                scoringTeamName = isHomeGoal ? homeComp.team.displayName : awayComp.team.displayName;
 
                                 if (isHomeGoal) {
                                     goalsHome.push(`⚽ ${goalEntry}`);
@@ -1173,7 +1201,7 @@
                         let prev = previousEspnScores[matchId];
                         if (prev !== undefined && isLive) {
                             if (homeScoreVal > prev.home || awayScoreVal > prev.away) {
-                                triggerGoalPush(homeComp.team.displayName, awayComp.team.displayName, homeScoreVal, awayScoreVal, latestScorerText, matchId);
+                                triggerGoalPush(homeComp.team.displayName, awayComp.team.displayName, homeScoreVal, awayScoreVal, latestScorerText, matchId, scoringTeamName);
                             }
                         }
                         previousEspnScores[matchId] = { home: homeScoreVal, away: awayScoreVal };
@@ -1203,7 +1231,7 @@
 
             if (!isInitialized) {
                 isInitialized = true;
-                currentMatchday = 6;
+                currentMatchday = determineCurrentMatchday();
             }
 
             if (showAlert) alert("ESPN Live-Daten erfolgreich synchronisiert!");
