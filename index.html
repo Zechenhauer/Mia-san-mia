@@ -46,7 +46,7 @@
             box-shadow: 0 4px 20px rgba(220, 5, 45, 0.2);
         }
 
-        /* LAUFBAND / TICKER STYLES (RUHIGER & SAUBERES DESIGN) */
+        /* LAUFBAND / TICKER STYLES (RUHIGER & DYNAMISCHES LABEL) */
         .ticker-wrapper {
             width: 100%;
             background: #000000;
@@ -71,6 +71,7 @@
             z-index: 2;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
         .ticker-content-box {
             overflow: hidden;
@@ -81,7 +82,7 @@
         .ticker-track {
             display: inline-block;
             white-space: nowrap;
-            animation: ticker-scroll 95s linear infinite; /* Auf 95s verlangsamt */
+            animation: ticker-scroll 95s linear infinite;
             font-size: 0.85rem;
             color: #ffffff;
             font-weight: 500;
@@ -614,7 +615,7 @@
 <div class="container">
     <!-- LAUFBAND / LIVE-TICKER OBEN -->
     <div class="ticker-wrapper">
-        <div class="ticker-label">⚽ Ticker</div>
+        <div class="ticker-label" id="tickerLabel">⚽ Ticker</div>
         <div class="ticker-content-box">
             <div class="ticker-track" id="tickerTrack">
                 <span class="ticker-item">Lade aktuelle Spielstände und Tore...</span>
@@ -1324,18 +1325,18 @@
         updateTicker();
     }
 
-    // EXAKT WIE FREIBURG APP: Live-Tore ODER automatischer Fallback auf den letzten gespielten Spieltag
+    // TICKER-STEUERUNG MIT AUTOMATISCHEM FALLBACK & DYNAMISCHEM LABEL
     function updateTicker() {
         let tickerItems = [];
+        let labelText = "⚽ Ticker";
         
         if (latestLiveGoalsTicker.length > 0) {
             tickerItems = latestLiveGoalsTicker;
+            labelText = "⚽ LIVE-TORE";
         } else {
-            // Automatisch den letzten Spieltag ermitteln, der bereits Spiele/Ergebnisse hat
             let targetMatchday = currentMatchday;
             let matches = leagueMatches[targetMatchday] || [];
             
-            // Prüfen, ob der aktuelle Spieltag beendete Spiele hat, sonst einen zurückgehen
             let hasResults = matches.some(m => m.homeScore !== null && m.homeScore !== undefined || m.isFinished);
             if (!hasResults && targetMatchday > 1) {
                 for (let d = targetMatchday - 1; d >= 1; d--) {
@@ -1348,6 +1349,8 @@
                 }
             }
 
+            labelText = `⚽ SPIELTAG ${targetMatchday} (ERGEBNISSE)`;
+
             matches.forEach(m => {
                 let score = (m.homeScore !== null && m.homeScore !== undefined) ? `${m.homeScore}:${m.awayScore}` : 'vs';
                 let status = m.isLive ? '🔴 LIVE' : (m.isFinished ? 'Endstand' : m.time || '');
@@ -1356,6 +1359,11 @@
                 
                 tickerItems.push(`<span class="ticker-item${highlightClass}">${m.home} - ${m.away} <span>${score}</span> (${status})</span>`);
             });
+        }
+
+        const tickerLabelElem = document.getElementById('tickerLabel');
+        if (tickerLabelElem) {
+            tickerLabelElem.textContent = labelText;
         }
 
         const tickerTrack = document.getElementById('tickerTrack');
