@@ -22,8 +22,6 @@
             --bayern-red-hover: #b00424;
             --bayern-dark: #660013;
             --bayern-dark-card: #211216;
-            --accent-green: rgba(46, 160, 67, 0.25);
-            --accent-white: rgba(255, 255, 255, 0.22);
             --bayern-bright-red: #ff1a3c;
         }
 
@@ -48,7 +46,7 @@
             box-shadow: 0 4px 20px rgba(220, 5, 45, 0.2);
         }
 
-        /* NEU: LAUFBAND / TICKER STYLES */
+        /* LAUFBAND / TICKER STYLES (RUHIGER & SAUBERES DESIGN) */
         .ticker-wrapper {
             width: 100%;
             background: #000000;
@@ -83,7 +81,7 @@
         .ticker-track {
             display: inline-block;
             white-space: nowrap;
-            animation: ticker-scroll 55s linear infinite;
+            animation: ticker-scroll 95s linear infinite; /* Auf 95s verlangsamt */
             font-size: 0.85rem;
             color: #ffffff;
             font-weight: 500;
@@ -94,11 +92,20 @@
         .ticker-item {
             display: inline-block;
             padding: 0 30px;
+            color: #ffffff;
         }
         .ticker-item span {
-            color: var(--bayern-bright-red);
+            color: #ffffff;
             font-weight: bold;
             margin-left: 6px;
+        }
+        .ticker-item.bayern-ticker-highlight {
+            background: rgba(220, 5, 45, 0.3);
+            border-top: 1px solid var(--bayern-red);
+            border-bottom: 1px solid var(--bayern-red);
+            padding-top: 2px;
+            padding-bottom: 2px;
+            border-radius: 4px;
         }
         @keyframes ticker-scroll {
             0% { transform: translateX(100%); }
@@ -605,7 +612,7 @@
 <body>
 
 <div class="container">
-    <!-- NEU: LAUFBAND / LIVE-TICKER OBEN -->
+    <!-- LAUFBAND / LIVE-TICKER OBEN -->
     <div class="ticker-wrapper">
         <div class="ticker-label">⚽ Ticker</div>
         <div class="ticker-content-box">
@@ -962,6 +969,7 @@
 
     let teamLogos = {};
     let leagueMatches = {};
+    let latestLiveGoalsTicker = [];
 
     const matchdayFridays = {
         1: "2026-08-28", 2: "2026-09-04", 3: "2026-09-11", 4: "2026-09-18", 5: "2026-10-09",
@@ -1135,6 +1143,7 @@
             }
 
             leagueMatches = {};
+            latestLiveGoalsTicker = [];
             let hasLive = false;
 
             for (let s = 1; s <= 34; s++) {
@@ -1245,6 +1254,12 @@
                                 } else {
                                     goalsAway.push(`⚽ ${goalEntry}`);
                                 }
+
+                                if (isLive) {
+                                    let isBayernGame = homeComp.team.displayName.includes("Bayern") || awayComp.team.displayName.includes("Bayern");
+                                    let highlightClass = isBayernGame ? ' bayern-ticker-highlight' : '';
+                                    latestLiveGoalsTicker.push(`<span class="ticker-item${highlightClass}">⚽ ${scoringTeamName}: ${playerName} ${clock ? '(' + clock + ')' : ''} <span>${homeComp.team.displayName} ${homeScoreVal}:${awayScoreVal} ${awayComp.team.displayName}</span></span>`);
+                                }
                             } else if (typeText.includes("yellow-red") || typeText.includes("gelb-rot")) {
                                 let cardEntry = `🟨🟥 ${playerName}${minuteStr}`;
                                 if (detail.team?.id === homeComp.team.id) goalsHome.push(cardEntry);
@@ -1309,23 +1324,46 @@
         updateTicker();
     }
 
-    // NEU: LAUFBAND / TICKER AKTUALISIEREN
+    // EXAKT WIE FREIBURG APP: Live-Tore ODER automatischer Fallback auf den letzten gespielten Spieltag
     function updateTicker() {
         let tickerItems = [];
-        let matches = leagueMatches[currentMatchday] || [];
         
-        matches.forEach(m => {
-            let score = (m.homeScore !== null && m.homeScore !== undefined) ? `${m.homeScore}:${m.awayScore}` : 'vs';
-            let status = m.isLive ? '🔴 LIVE' : (m.isFinished ? 'Endstand' : m.time || '');
-            tickerItems.push(`<span class="ticker-item">${m.home} - ${m.away} <span>${score}</span> (${status})</span>`);
-        });
+        if (latestLiveGoalsTicker.length > 0) {
+            tickerItems = latestLiveGoalsTicker;
+        } else {
+            // Automatisch den letzten Spieltag ermitteln, der bereits Spiele/Ergebnisse hat
+            let targetMatchday = currentMatchday;
+            let matches = leagueMatches[targetMatchday] || [];
+            
+            // Prüfen, ob der aktuelle Spieltag beendete Spiele hat, sonst einen zurückgehen
+            let hasResults = matches.some(m => m.homeScore !== null && m.homeScore !== undefined || m.isFinished);
+            if (!hasResults && targetMatchday > 1) {
+                for (let d = targetMatchday - 1; d >= 1; d--) {
+                    let prevMatches = leagueMatches[d] || [];
+                    if (prevMatches.some(m => m.homeScore !== null && m.homeScore !== undefined || m.isFinished)) {
+                        targetMatchday = d;
+                        matches = prevMatches;
+                        break;
+                    }
+                }
+            }
+
+            matches.forEach(m => {
+                let score = (m.homeScore !== null && m.homeScore !== undefined) ? `${m.homeScore}:${m.awayScore}` : 'vs';
+                let status = m.isLive ? '🔴 LIVE' : (m.isFinished ? 'Endstand' : m.time || '');
+                let isBayernGame = m.home.includes("Bayern") || m.away.includes("Bayern");
+                let highlightClass = isBayernGame ? ' bayern-ticker-highlight' : '';
+                
+                tickerItems.push(`<span class="ticker-item${highlightClass}">${m.home} - ${m.away} <span>${score}</span> (${status})</span>`);
+            });
+        }
 
         const tickerTrack = document.getElementById('tickerTrack');
         if (tickerTrack) {
             if (tickerItems.length > 0) {
                 tickerTrack.innerHTML = tickerItems.join('');
             } else {
-                tickerTrack.innerHTML = `<span class="ticker-item">Keine Live-Spiele am aktuellen Spieltag verfügbar.</span>`;
+                tickerTrack.innerHTML = `<span class="ticker-item">Keine Spiele im Ticker verfügbar.</span>`;
             }
         }
     }
