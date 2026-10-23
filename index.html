@@ -1079,10 +1079,12 @@
         }
     }
 
+    // Optimierte und robuste Push-Auslösung für Bundesliga-Tore
     async function triggerGoalPush(home, away, hScore, aScore, latestScorer, matchId, scoringTeamName) {
         if (!latestScorer || latestScorer.includes("Tor") || latestScorer.trim() === "⚽") return;
 
-        let uniqueGoalId = `${matchId}_${latestScorer}`;
+        // Eindeutige ID kombiniert aus Match-ID, Torschütze und aktuellem Spielstand zur Vermeidung von Dubletten
+        let uniqueGoalId = `${matchId}_${latestScorer}_${hScore}-${aScore}`;
 
         try {
             let { data: existing, error: checkError } = await supabaseClient
